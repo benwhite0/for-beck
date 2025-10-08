@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>News & Events — For Beck</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Playfair+Display:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<header class="site-header" role="banner">
+  <div class="container header-inner">
+    <a class="brand" href="index.html"><span class="brand-mark" aria-hidden="true">✤</span><span class="brand-text">For Beck</span></a>
+    <nav class="site-nav" aria-label="Primary">
+      <button class="nav-toggle" aria-expanded="false" aria-controls="nav-menu">Menu</button>
+      <ul id="nav-menu" class="nav-list">
+        <li><a class="nav-link" href="index.html">Home</a></li>
+        <li><a class="nav-link" href="nineteen-years.html">19 Years</a></li>
+        <li><a class="nav-link" href="action-for-change.html">Action for Change</a></li>
+        <li><a class="nav-link" href="support.html">Silver Threads</a></li>
+        <li><a class="nav-link is-active" href="news-events.html">News & Events</a></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+
+<main id="content" class="site-main" tabindex="-1">
+  <section class="section page-header">
+    <div class="container">
+      <h1 class="h1">News & Events</h1>
+      <p>Simple list in date order with upcoming items and past recaps.</p>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <ol class="news-list" id="news-list" aria-live="polite">
+        <!-- Keep items in reverse-chronological order (newest first) -->
+
+        <li>
+            <div class="news-item">
+              <time datetime="2024-06-22" class="news-date">22 Jun 2024</time>
+              <div class="news-body">
+                <h3 class="h3">First print run of Fran’s book</h3>
+                <p>Get your copy from https://www.beckbromley.com/</p>
+              </div>
+            </div>
+          </li>
+        <li>
+          <div class="news-item">
+            <time datetime="2023-11-24" class="news-date">24 Nov 2023</time>
+            <div class="news-body">
+              <h3 class="h3">Community walk in Beck’s memory</h3>
+              <p>Meet at the park entrance, 10am. All welcome.</p>
+            </div>
+          </div>
+        </li>
+
+      </ol>
+    </div>
+  </section>
+</main>
+
+<footer class="site-footer">
+  <div class="container"><p class="small">In memory of Beck.</p></div>
+</footer>
+
+<script src="script.js" defer></script>
+</body>
+</html>

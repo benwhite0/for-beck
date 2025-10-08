@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>In Loving Memory of Beck</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Playfair+Display:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet" />
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- Fixed Header -->
+  <header class="site-header" role="banner">
+    <div class="container header-inner">
+      <a class="brand" href="index.html" aria-label="Home">
+        <span class="brand-mark" aria-hidden="true">✤</span>
+        <span class="brand-text">For Beck</span>
+      </a>
+      <nav class="site-nav" aria-label="Primary">
+        <button class="nav-toggle" aria-expanded="false" aria-controls="nav-menu">Menu</button>
+        <ul id="nav-menu" class="nav-list">
+          <li><a class="nav-link is-active" href="index.html">Home</a></li>
+          <li><a class="nav-link" href="nineteen-years.html">19 Years</a></li>
+          <li><a class="nav-link" href="action-for-change.html">Action for Change</a></li>
+          <li><a class="nav-link" href="support.html">Silver Threads</a></li>
+          <li><a class="nav-link" href="news-events.html">News & Events</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main id="content" class="site-main" tabindex="-1">
+    <!-- Hero -->
+    <section class="section hero">
+      <div class="container">
+        <div class="hero-inner">
+          <h1 class="display">Beck</h1>
+          <p class="subtle">2003 — 2022</p>
+          <p class="lead">
+            “I pause... and accept the things I can't change. I trust in the future... and change the things I can.
+            I embrace the joy in life and empower others to do the same.”
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- About -->
+    <section class="section">
+      <div class="container">
+        <div class="grid grid-2">
+          <div>
+            <h2 class="h2">In Loving Memory</h2>
+            <p>
+              This space remembers Beck through stories, photos, and actions taken in his name.
+              It will grow over time — shaped by family, friends, and anyone moved to share.
+            </p>
+            <p>
+              Explore memories from <em>19 Years</em>, add your voice to <em>Action for Change</em>,
+              find small supports in <em>Silver Threads</em>, and keep up with <em>News & Events</em>.
+            </p>
+          </div>
+          <div class="panel image-panel" aria-label="Hero image" id="hero-image-panel">
+            <img id="hero-image" alt="Hero image" class="hero-img" />
+            <button id="hero-upload-trigger" type="button" class="img-placeholder">Add Photo</button>
+            <input id="hero-upload-input" type="file" accept="image/*" hidden />
+            <button id="hero-remove-btn" type="button" class="hero-remove-btn" aria-label="Remove photo">✕</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Quick Links -->
+    <section class="section section-muted">
+      <div class="container">
+        <ul class="quick-links">
+          <li>
+            <a class="card-link" href="nineteen-years.html">
+              <span class="card-title">19 Years</span>
+              <span class="card-desc">Memories, photos, and moments.</span>
+            </a>
+          </li>
+          <li>
+            <a class="card-link" href="action-for-change.html">
+              <span class="card-title">Action for Change</span>
+              <span class="card-desc">What we’re doing in Beck’s name.</span>
+            </a>
+          </li>
+          <li>
+            <a class="card-link" href="support.html">
+              <span class="card-title">Silver Threads</span>
+              <span class="card-desc">Gentle tips & ways to cope.</span>
+            </a>
+          </li>
+          <li>
+            <a class="card-link" href="news-events.html">
+              <span class="card-title">News & Events</span>
+              <span class="card-desc">What’s happening and how to join.</span>
+            </a>
+          </li>
+        </ul>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <p class="small">
+        In memory of Beck. If you need support: <a href="https://www.zerosuicidealliance.com" target="_blank" rel="noopener">Zero Suicide Alliance</a>,
+        <a href="https://www.mind.org.uk" target="_blank" rel="noopener">Mind</a>,
+        Text <strong>SHOUT</strong> to <strong>85258</strong>.
+      </p>
+    </div>
+  </footer>
+
+  <script src="script.js" defer></script>
+</body>
+</html>

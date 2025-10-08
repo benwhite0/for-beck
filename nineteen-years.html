@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>19 Years — For Beck</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Playfair+Display:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="site-header" role="banner">
+    <div class="container header-inner">
+      <a class="brand" href="index.html"><span class="brand-mark" aria-hidden="true">✤</span><span class="brand-text">For Beck</span></a>
+      <nav class="site-nav" aria-label="Primary">
+        <button class="nav-toggle" aria-expanded="false" aria-controls="nav-menu">Menu</button>
+        <ul id="nav-menu" class="nav-list">
+          <li><a class="nav-link" href="index.html">Home</a></li>
+          <li><a class="nav-link is-active" href="nineteen-years.html">19 Years</a></li>
+          <li><a class="nav-link" href="action-for-change.html">Action for Change</a></li>
+          <li><a class="nav-link" href="support.html">Silver Threads</a></li>
+          <li><a class="nav-link" href="news-events.html">News & Events</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main id="content" class="site-main" tabindex="-1">
+    <section class="section page-header">
+      <div class="container header-with-cta">
+        <div>
+          <h1 class="h1">19 Years</h1>
+          <p>Memories, photos, videos, and words from Beck’s life.</p>
+        </div>
+        <button class="btn" data-open-modal data-section="memories">Share your memory</button>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container">
+        <!-- Feed -->
+        <ul class="card-grid" id="feed-memories" aria-live="polite" aria-busy="false">
+          <!-- JS will render stored posts here -->
+        </ul>
+        <p class="muted empty-state" data-empty-for="memories">No memories yet. Be the first to share.</p>
+      </div>
+    </section>
+  </main>
+
+  <!-- Modal (shared structure; JS fills heading/section) -->
+  <div class="modal" id="submission-modal" aria-hidden="true" aria-labelledby="modal-title" role="dialog">
+    <div class="modal-backdrop" data-close-modal></div>
+    <div class="modal-dialog" role="document" aria-modal="true">
+      <button class="modal-close" aria-label="Close" data-close-modal>&times;</button>
+      <h2 class="h2" id="modal-title">Share your memory</h2>
+      <form id="submission-form" novalidate data-target-feed="feed-memories" data-section-key="memories">
+        <div class="form-grid">
+          <label class="field">
+            <span>Author <abbr title="required">*</abbr></span>
+            <input type="text" name="author" required autocomplete="name" />
+            <small class="error" data-error-for="author"></small>
+          </label>
+
+          <label class="field">
+            <span>Credits (photo/video/words)</span>
+            <input type="text" name="credits" placeholder="e.g., Photo: J. Doe; Words: F. Bromley" />
+          </label>
+
+          <label class="field field-wide">
+            <span>Story / Memory <abbr title="required">*</abbr></span>
+            <textarea name="content" rows="6" required></textarea>
+            <small class="error" data-error-for="content"></small>
+          </label>
+
+          <label class="field">
+            <span>Date of event / memory</span>
+            <input type="date" name="eventDate" />
+          </label>
+
+          <label class="field">
+            <span>Upload (optional)</span>
+            <input type="file" name="media" accept="image/*,video/*,audio/*" />
+          </label>
+        </div>
+
+        <div class="form-actions">
+          <button class="btn" type="submit">Submit</button>
+          <button class="btn btn-ghost" type="button" data-close-modal>Cancel</button>
+        </div>
+        <p class="muted tiny">“Date posted” is set automatically.</p>
+      </form>
+    </div>
+  </div>
+
+  <footer class="site-footer">
+    <div class="container"><p class="small">In memory of Beck.</p></div>
+  </footer>
+
+  <script src="script.js" defer></script>
+</body>
+</html>
