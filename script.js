@@ -231,7 +231,7 @@ import { getStorage, ref as storageRef, uploadBytes, uploadBytesResumable, getDo
           }
         }
       const displayTitle = (item.title && String(item.title).trim()) ? String(item.title).trim() : sanitizeTitle(item.content);
-      const u = new URL('entry.html', location.origin);
+      const u = new URL('entry.html', document.baseURI);
       u.searchParams.set('id', item.id);
       u.searchParams.set('section', section);
       const link = `${u.pathname}${u.search}#id=${encodeURIComponent(item.id)}&section=${encodeURIComponent(section)}`;
@@ -549,8 +549,8 @@ import { getStorage, ref as storageRef, uploadBytes, uploadBytesResumable, getDo
     onAuthStateChanged(auth, async user => {
       if (!user || user.isAnonymous) {
         statusEl.textContent = 'Not signed in';
-        loginBtn?.removeAttribute('disabled');
-        logoutBtn?.setAttribute('disabled','true');
+        if (loginBtn) { loginBtn.style.display = ''; loginBtn.removeAttribute('disabled'); }
+        if (logoutBtn) { logoutBtn.style.display = 'none'; logoutBtn.setAttribute('disabled','true'); }
         listEl.innerHTML = '';
         if (emptyEl) {
           emptyEl.textContent = 'Sign in with an admin Google account to review pending submissions.';
@@ -559,8 +559,8 @@ import { getStorage, ref as storageRef, uploadBytes, uploadBytesResumable, getDo
         return;
       }
       statusEl.textContent = user.email || 'Signed in';
-      loginBtn?.setAttribute('disabled','true');
-      logoutBtn?.removeAttribute('disabled');
+      if (loginBtn) { loginBtn.style.display = 'none'; }
+      if (logoutBtn) { logoutBtn.style.display = ''; logoutBtn.removeAttribute('disabled'); }
 
       if (!isAdminUser(user)) {
         listEl.innerHTML = '';
