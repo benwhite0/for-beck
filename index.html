@@ -64,8 +64,11 @@
               find small supports in <em>Silver Threads</em>, and keep up with <em>News & Events</em>.
             </p>
           </div>
-          <div class="panel image-panel" aria-label="Hero image">
-            <div class="img-placeholder" style="cursor:default">Share a memory via the submission form.</div>
+          <div class="panel image-panel" aria-label="Hero image" id="hero-image-panel">
+            <img id="hero-image" class="hero-img" alt="" />
+            <div id="hero-upload-trigger" class="img-placeholder">Share a memory via the submission form.</div>
+            <input id="hero-upload-input" type="file" accept="image/*" style="display:none" />
+            <button id="hero-remove-btn" class="hero-remove-btn" aria-label="Remove image">×</button>
           </div>
         </div>
       </div>

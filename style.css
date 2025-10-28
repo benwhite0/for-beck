@@ -211,4 +211,8 @@
   /* ========= Utilities ========= */
   .empty-state{margin-top:6px}
   .t-center{text-align:center}
+  /* Approvals page lists */
+  .stack{list-style:none; padding:0; margin:0; display:grid; gap:14px}
+  .panel details > summary{list-style:none}
+  details summary::-webkit-details-marker{display:none}
   
