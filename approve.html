@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Approve Submission — For Beck</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Playfair+Display:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="site-header" role="banner">
+    <div class="container header-inner">
+      <a class="brand" href="index.html"><span class="brand-mark" aria-hidden="true">✤</span><span class="brand-text">For Beck</span></a>
+      <nav class="site-nav" aria-label="Primary">
+        <button class="nav-toggle" aria-expanded="false" aria-controls="nav-menu">Menu</button>
+        <ul id="nav-menu" class="nav-list">
+          <li><a class="nav-link" href="index.html">Home</a></li>
+          <li><a class="nav-link" href="nineteen-years.html">19 Years</a></li>
+          <li><a class="nav-link" href="action-for-change.html">Action for Change</a></li>
+          <li><a class="nav-link" href="support.html">Silver Threads</a></li>
+          <li><a class="nav-link" href="news-events.html">News & Events</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main id="content" class="site-main" tabindex="-1">
+    <section class="section page-header">
+      <div class="container header-with-cta">
+        <div>
+          <h1 class="h1">Admin Approvals</h1>
+          <p class="muted">Sign in to review and approve pending submissions.</p>
+        </div>
+        <div class="form-actions small" id="admin-auth">
+          <span id="admin-status" class="muted small">Checking auth…</span>
+          <button class="btn" id="admin-login">Sign in with Google</button>
+          <button class="btn btn-ghost" id="admin-logout" disabled>Sign out</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container">
+        <div id="admin-approvals">
+          <p id="admin-empty" class="muted">No pending submissions.</p>
+          <ul id="admin-list" class="stack" style="gap:1rem"></ul>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container"><p class="small">In memory of Beck.</p></div>
+  </footer>
+
+  <script type="module" src="script.js"></script>
+</body>
+</html>
+
+

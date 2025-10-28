@@ -33,7 +33,7 @@
         <h1 class="h1">Action for Change</h1>
         <p>Things we’re continuing to do — projects, fundraisers, kindnesses, big or small.</p>
       </div>
-      <button class="btn" data-open-modal data-section="actions">Share your memory</button>
+      <a class="btn" href="submit.html">Submit an entry</a>
     </div>
   </section>
 
@@ -45,55 +45,12 @@
   </section>
 </main>
 
-<!-- Shared Modal -->
-<div class="modal" id="submission-modal" aria-hidden="true" aria-labelledby="modal-title" role="dialog">
-  <div class="modal-backdrop" data-close-modal></div>
-  <div class="modal-dialog" role="document" aria-modal="true">
-    <button class="modal-close" aria-label="Close" data-close-modal>&times;</button>
-    <h2 class="h2" id="modal-title">Share your memory</h2>
-    <form id="submission-form" novalidate data-target-feed="feed-actions" data-section-key="actions">
-      <div class="form-grid">
-        <label class="field">
-          <span>Author <abbr title="required">*</abbr></span>
-          <input type="text" name="author" required autocomplete="name" />
-          <small class="error" data-error-for="author"></small>
-        </label>
-
-        <label class="field">
-          <span>Credits (photo/video/words)</span>
-          <input type="text" name="credits" />
-        </label>
-
-        <label class="field field-wide">
-          <span>What did you do? <abbr title="required">*</abbr></span>
-          <textarea name="content" rows="6" required></textarea>
-          <small class="error" data-error-for="content"></small>
-        </label>
-
-        <label class="field">
-          <span>Date of action</span>
-          <input type="date" name="eventDate" />
-        </label>
-
-        <label class="field">
-          <span>Upload (optional)</span>
-          <input type="file" name="media" accept="image/*,video/*,audio/*" />
-        </label>
-      </div>
-
-      <div class="form-actions">
-        <button class="btn" type="submit">Submit</button>
-        <button class="btn btn-ghost" type="button" data-close-modal>Cancel</button>
-      </div>
-      <p class="muted tiny">“Date posted” is set automatically.</p>
-    </form>
-  </div>
-</div>
+ 
 
 <footer class="site-footer">
   <div class="container"><p class="small">In memory of Beck.</p></div>
 </footer>
 
-<script src="script.js" defer></script>
+<script type="module" src="script.js"></script>
 </body>
 </html>

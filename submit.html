@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Submit an Entry — For Beck</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Playfair+Display:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="site-header" role="banner">
+    <div class="container header-inner">
+      <a class="brand" href="index.html"><span class="brand-mark" aria-hidden="true">✤</span><span class="brand-text">For Beck</span></a>
+      <nav class="site-nav" aria-label="Primary">
+        <button class="nav-toggle" aria-expanded="false" aria-controls="nav-menu">Menu</button>
+        <ul id="nav-menu" class="nav-list">
+          <li><a class="nav-link" href="index.html">Home</a></li>
+          <li><a class="nav-link" href="nineteen-years.html">19 Years</a></li>
+          <li><a class="nav-link" href="action-for-change.html">Action for Change</a></li>
+          <li><a class="nav-link" href="support.html">Silver Threads</a></li>
+          <li><a class="nav-link" href="news-events.html">News & Events</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main id="content" class="site-main" tabindex="-1">
+    <section class="section page-header">
+      <div class="container">
+        <h1 class="h1">Submit an Entry</h1>
+        <p class="muted">Your submission will be reviewed by the team before it appears on the site.</p>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container">
+        <form id="moderated-form" class="panel" novalidate>
+          <div class="form-grid">
+            <label class="field">
+              <span>Your name <abbr title="required">*</abbr></span>
+              <input type="text" name="author" required autocomplete="name" />
+              <small class="error" data-error-for="author"></small>
+            </label>
+
+            <label class="field">
+              <span>Credits (photo/video/words)</span>
+              <input type="text" name="credits" />
+            </label>
+
+            <label class="field">
+              <span>Section <abbr title="required">*</abbr></span>
+              <select name="section" required>
+                <option value="" disabled selected>Select a section</option>
+                <option value="memories">19 Years</option>
+                <option value="actions">Action for Change</option>
+                <option value="silver">Silver Threads</option>
+              </select>
+              <small class="error" data-error-for="section"></small>
+            </label>
+
+            <label class="field field-wide">
+              <span>Title (optional)</span>
+              <input type="text" name="title" />
+            </label>
+
+            <label class="field">
+              <span>Date (optional)</span>
+              <input type="date" name="eventDate" />
+            </label>
+
+            <label class="field field-wide">
+              <span>Your entry <abbr title="required">*</abbr></span>
+              <textarea name="content" rows="7" required></textarea>
+              <small class="error" data-error-for="content"></small>
+            </label>
+
+            <label class="field field-wide">
+              <span>Attach media</span>
+              <input type="file" name="media" accept="image/*,video/*,audio/*" />
+              <small class="muted tiny">Please attach only one file for now.</small>
+            </label>
+          </div>
+
+          <div class="form-actions">
+            <button class="btn" type="submit">Submit</button>
+            <a class="btn btn-ghost" href="index.html">Cancel</a>
+          </div>
+          <p class="muted tiny">We’ll review and post approved submissions. Thank you.</p>
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container"><p class="small">In memory of Beck.</p></div>
+  </footer>
+
+  <script type="module" src="script.js"></script>
+</body>
+</html>
+
+
