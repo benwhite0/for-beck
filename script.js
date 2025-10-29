@@ -220,7 +220,7 @@ import { getStorage, ref as storageRef, uploadBytes, uploadBytesResumable, getDo
       if (emptyMsg) emptyMsg.style.display = 'none';
   
       feedEl.innerHTML = list.map(item => {
-        let mediaHtml = `<div class="card-media" aria-hidden="true"></div>`;
+      let mediaHtml = '';
       if (item.mediaURL) {
           if (item.mediaType?.startsWith('image/')) {
           mediaHtml = `<div class="card-media"><img alt="" src="${item.mediaURL}" /></div>`;
