@@ -201,7 +201,7 @@
   .field{display:flex; flex-direction:column; gap:6px}
   .field-wide{grid-column:1 / -1}
   .field span{font-weight:600}
-  input[type="text"], input[type="email"], input[type="date"], input[type="file"], textarea{
+  input[type="text"], input[type="email"], input[type="password"], input[type="date"], input[type="file"], textarea{
     width:100%; padding:.7rem .8rem; border-radius:10px; border:1px solid var(--border); background:#FCFAF7
   }
   select{width:100%; padding:.7rem .8rem; border-radius:10px; border:1px solid var(--border); background:#FCFAF7}
