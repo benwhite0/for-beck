@@ -1023,9 +1023,9 @@ import { getStorage, ref as storageRef, uploadBytes, uploadBytesResumable, getDo
 
   /* ====== Static hero image ====== */
   (function setHeroImage(){
-    const img = document.getElementById('hero-image');
-    if (!img) return;
+      const img = document.getElementById('hero-image');
+        if (!img) return;
     if (!img.getAttribute('src')) img.remove();
-  })();
+    })();
   })();
   
