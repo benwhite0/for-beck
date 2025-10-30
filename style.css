@@ -57,7 +57,7 @@
   .nav-toggle{display:none}
   @media (max-width: 720px){
     .nav-toggle{display:inline-block; background:var(--panel); border:1px solid var(--border); padding:.4rem .7rem; border-radius:10px}
-    .site-nav .nav-list{display:none; position:absolute; top:60px; right:20px; background:var(--panel); padding:.5rem; border:1px solid var(--border); border-radius:12px; box-shadow:var(--shadow)}
+    .site-nav .nav-list{display:none; position:absolute; top:60px; right:8px; background:var(--panel); padding:.5rem; border:1px solid var(--border); border-radius:12px; box-shadow:var(--shadow)}
     .site-nav[aria-expanded="true"] .nav-list{display:block}
     .site-nav .nav-list .nav-link{
       padding:.4rem .6rem;
@@ -230,8 +230,8 @@
   .news-date{font-weight:600; color:var(--muted)}
   .news-body h3{margin:.1rem 0}
   @media (max-width: 720px){
-    /* Align cards flush with container left; add subtle right padding */
-    .news-list{padding:0 12px 0 0}
+    /* Equal spacing on both sides for event cards */
+    .news-item{ margin-left:-5px; margin-right:20px; }
   }
   
   /* ========= Footer ========= */
@@ -244,4 +244,16 @@
   .stack{list-style:none; padding:0; margin:0; display:grid; gap:14px}
   .panel details > summary{list-style:none}
   details summary::-webkit-details-marker{display:none}
+  
+  /* ===== Mobile polish for Admin and Auth ===== */
+  @media (max-width: 720px){
+    /* ensure equal left/right spacing for admin cards when expanded */
+    #admin-approvals .panel{margin:0 50px}
+    /* bigger breathing room before the Approved header */
+    #admin-approved-header{margin-top:26px}
+    /* keep sign-in buttons on the same row */
+    #admin-auth{gap:8px}
+    #admin-auth .btn{padding:.5rem .8rem}
+    #admin-status{flex-basis:100%}
+  }
   
