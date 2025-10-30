@@ -3,7 +3,7 @@
 // ESM-only: ensure HTML pages load this with <script type="module" src="script.js"></script>
 
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js';
-import { getAuth, onAuthStateChanged, signInAnonymously, signOut, GoogleAuthProvider, signInWithPopup } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js';
+import { getAuth, onAuthStateChanged, signInAnonymously, signOut, GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js';
 import { getFirestore, collection, addDoc, getDoc, getDocs, doc, query, where, orderBy, limit, updateDoc, deleteDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js';
 import { getStorage, ref as storageRef, uploadBytes, uploadBytesResumable, getDownloadURL } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-storage.js';
 
@@ -25,7 +25,7 @@ import { getStorage, ref as storageRef, uploadBytes, uploadBytesResumable, getDo
   const auth = getAuth(app);
   const db = getFirestore(app);
   const storage = getStorage(app);
-  const ADMIN_EMAILS = ['benjaminwhite02@gmail.com'];
+  const ADMIN_EMAILS = ['benjaminwhite02@gmail.com', 'fran@scabetti.co.uk'];
   const isAdminUser = (user) => !!(user && !user.isAnonymous && ADMIN_EMAILS.includes(user.email || ''));
 
   // Do NOT auto sign-in anonymously here to avoid overriding Google sessions.
@@ -538,6 +538,14 @@ import { getStorage, ref as storageRef, uploadBytes, uploadBytesResumable, getDo
     const statusEl = $('#admin-status');
     const listEl = $('#admin-list');
     const emptyEl = $('#admin-empty');
+    const emailShowBtn = $('#admin-email-show');
+    const resetSignedInBtn = $('#admin-reset');
+    const emailForm = $('#admin-email-form');
+    const emailInput = $('#admin-email');
+    const passwordInput = $('#admin-password');
+    const emailLoginBtn = $('#admin-email-login');
+    const emailSignupBtn = $('#admin-email-signup');
+    const emailResetBtn = $('#admin-email-reset');
 
     loginBtn?.addEventListener('click', async () => {
       try {
@@ -546,7 +554,92 @@ import { getStorage, ref as storageRef, uploadBytes, uploadBytesResumable, getDo
     });
     logoutBtn?.addEventListener('click', () => signOut(auth));
 
+    emailShowBtn?.addEventListener('click', () => {
+      if (emailForm) emailForm.style.display = 'flex';
+      if (loginBtn) loginBtn.style.display = 'none';
+      if (emailShowBtn) emailShowBtn.style.display = 'none';
+      emailInput?.focus();
+    });
+
+    async function getEmailAndPassword(){
+      const email = (emailInput?.value || '').trim();
+      const password = passwordInput?.value || '';
+      if (!email || !password) {
+        alert('Enter email and password');
+        throw new Error('missing-creds');
+      }
+      return { email, password };
+    }
+
+    emailLoginBtn?.addEventListener('click', async () => {
+      try {
+        const { email, password } = await getEmailAndPassword();
+        await signInWithEmailAndPassword(auth, email, password);
+      } catch (e) {
+        if (e?.code === 'auth/invalid-credential') alert('Invalid email or password.');
+        else if (e?.message !== 'missing-creds') alert('Sign-in failed.');
+        console.error(e);
+      }
+    });
+
+    emailSignupBtn?.addEventListener('click', async () => {
+      try {
+        const { email, password } = await getEmailAndPassword();
+        await createUserWithEmailAndPassword(auth, email, password);
+        alert('Account created. You will only see admin items if your email is on the admin list.');
+      } catch (e) {
+        if (e?.code === 'auth/email-already-in-use') alert('Email already in use. Try Sign in.');
+        else if (e?.code === 'auth/operation-not-allowed') alert('Email/password sign-in is not enabled for this project.');
+        else if (e?.message !== 'missing-creds') alert('Sign-up failed.');
+        console.error(e);
+      }
+    });
+
+    emailResetBtn?.addEventListener('click', async () => {
+      try {
+        const email = (emailInput?.value || '').trim();
+        if (!email) { alert('Enter your email to reset.'); return; }
+        await sendPasswordResetEmail(auth, email);
+        alert('Password reset email sent if the account exists.');
+      } catch (e) {
+        alert('Failed to send reset email.');
+        console.error(e);
+      }
+    });
+
+    resetSignedInBtn?.addEventListener('click', async () => {
+      try {
+        const email = auth.currentUser?.email || '';
+        if (!email) { alert('No email on account.'); return; }
+        await sendPasswordResetEmail(auth, email);
+        alert('Password reset email sent.');
+      } catch (e) {
+        alert('Failed to send reset email.');
+        console.error(e);
+      }
+    });
+
+    function updateAuthUi(user){
+      const signedIn = !!(user && !user.isAnonymous);
+      if (signedIn) {
+        if (statusEl) statusEl.textContent = user.email || 'Signed in';
+        if (logoutBtn) { logoutBtn.style.display = ''; logoutBtn.removeAttribute('disabled'); }
+        if (loginBtn) loginBtn.style.display = 'none';
+        if (emailShowBtn) emailShowBtn.style.display = 'none';
+        if (emailForm) emailForm.style.display = 'none';
+        if (resetSignedInBtn) resetSignedInBtn.style.display = user.email ? '' : 'none';
+      } else {
+        if (statusEl) statusEl.textContent = 'Not signed in';
+        if (logoutBtn) { logoutBtn.style.display = 'none'; logoutBtn.setAttribute('disabled','true'); }
+        if (loginBtn) loginBtn.style.display = '';
+        if (emailShowBtn) emailShowBtn.style.display = '';
+        if (emailForm) emailForm.style.display = 'none';
+        if (resetSignedInBtn) resetSignedInBtn.style.display = 'none';
+      }
+    }
+
     onAuthStateChanged(auth, async user => {
+      updateAuthUi(user);
       if (!user || user.isAnonymous) {
         statusEl.textContent = 'Not signed in';
         if (loginBtn) { loginBtn.style.display = ''; loginBtn.removeAttribute('disabled'); }

@@ -36,7 +36,18 @@
         <div class="form-actions small" id="admin-auth">
           <span id="admin-status" class="muted small">Checking auth…</span>
           <button class="btn" id="admin-login">Sign in with Google</button>
+          <button class="btn" id="admin-email-show">Sign in with Email</button>
           <button class="btn btn-ghost" id="admin-logout" disabled>Sign out</button>
+          <button class="btn btn-ghost" id="admin-reset" style="display:none">Reset password</button>
+          
+          <!-- Email/password admin sign-in -->
+          <form id="admin-email-form" class="small" style="display:none;gap:6px;flex-wrap:wrap;align-items:center">
+            <input type="email" id="admin-email" placeholder="email" style="min-width:200px" />
+            <input type="password" id="admin-password" placeholder="password" />
+            <button type="button" class="btn" id="admin-email-login">Email sign in</button>
+            <button type="button" class="btn btn-ghost" id="admin-email-signup">Create account</button>
+            <button type="button" class="btn btn-ghost" id="admin-email-reset">Reset password</button>
+          </form>
         </div>
       </div>
     </section>
