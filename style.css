@@ -40,11 +40,16 @@
     backdrop-filter: blur(6px);
     border-bottom:1px solid var(--border);
   }
+
+  
   .header-inner{display:flex; align-items:center; justify-content:space-between; padding:14px 0}
   .brand{display:inline-flex; align-items:center; gap:.6rem; text-decoration:none; font-weight:600}
   .brand-mark{font-size:1rem; color:var(--accent)}
   .brand-text{font-family:var(--font-display); font-size:1.15rem; letter-spacing:.2px}
-  
+  .brand{ margin-left:8px }           /* desktop */
+  @media (max-width: 720px){
+    .brand{ margin-left:3px }        /* mobile */
+  }
   .site-nav .nav-list{display:flex; gap:1rem; list-style:none; margin:0; padding:0}
   .nav-link{
     text-decoration:none; padding:.5rem .75rem; border-radius:999px;
@@ -56,7 +61,7 @@
   /* Mobile nav */
   .nav-toggle{display:none}
   @media (max-width: 720px){
-    .nav-toggle{display:inline-block; background:var(--panel); border:1px solid var(--border); padding:.4rem .7rem; border-radius:10px}
+    .nav-toggle{display:inline-block; background:var(--panel); margin-right:2px; border:1px solid var(--border); padding:.4rem .7rem; border-radius:10px}
     .site-nav .nav-list{display:none; position:absolute; top:60px; right:8px; background:var(--panel); padding:.5rem; border:1px solid var(--border); border-radius:12px; box-shadow:var(--shadow)}
     .site-nav[aria-expanded="true"] .nav-list{display:block}
     .site-nav .nav-list .nav-link{
