@@ -274,10 +274,11 @@ import { getStorage, ref as storageRef, uploadBytes, uploadBytesResumable, getDo
     return { mediaURL: url, mediaType: prepared.type };
   }
 
-  async function createSubmission({ author, credits, section, eventDate, title, content, file }, onProgress) {
+  async function createSubmission({ author, email = '', credits, section, eventDate, title, content, file }, onProgress) {
     const { mediaURL, mediaType } = await uploadMedia(file, section, onProgress);
     const payload = {
       author,
+      email: email.trim(),
       credits,
       section,
       eventDate: eventDate || '',
@@ -539,6 +540,8 @@ import { getStorage, ref as storageRef, uploadBytes, uploadBytesResumable, getDo
     modalForm.addEventListener('submit', async e => {
         e.preventDefault();
       const author = modalForm.author.value.trim();
+      const emailInput = modalForm.email;
+      const email = emailInput ? emailInput.value.trim() : '';
       const title = (modalForm.title?.value || '').trim();
       const content = modalForm.content.value.trim();
       const credits = modalForm.credits.value.trim();
@@ -546,6 +549,18 @@ import { getStorage, ref as storageRef, uploadBytes, uploadBytesResumable, getDo
       resetErrors(modalForm);
         let valid = true;
       if (!author) { setError(modalForm, 'author', 'Please enter a name'); valid = false; }
+      if (emailInput) {
+        if (!email) {
+          setError(modalForm, 'email', 'Please enter your email');
+          valid = false;
+        } else {
+          const emailPattern = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
+          if (!emailPattern.test(email)) {
+            setError(modalForm, 'email', 'Please enter a valid email');
+            valid = false;
+          }
+        }
+      }
       if (!content) { setError(modalForm, 'content', 'Please write something'); valid = false; }
         if (!valid) return;
       const file = modalForm.media?.files?.[0];
@@ -561,12 +576,12 @@ import { getStorage, ref as storageRef, uploadBytes, uploadBytesResumable, getDo
       }
       const progressEl = progressWrap.querySelector('progress');
       try {
-        await createSubmission({ author, credits, section, eventDate, title, content, file }, pct => {
+        await createSubmission({ author, email, credits, section, eventDate, title, content, file }, pct => {
           if (progressEl) progressEl.value = pct;
         });
         modalForm.reset();
         closeModal();
-        alert('Thank you! Your submission was sent for review.');
+        alert('Thank you! We’ll let you know when it’s posted.');
       } catch (err) {
         alert('Failed to submit. Please try again.');
         console.error(err);
@@ -582,6 +597,7 @@ import { getStorage, ref as storageRef, uploadBytes, uploadBytesResumable, getDo
     pageForm.addEventListener('submit', async e => {
       e.preventDefault();
       const author = pageForm.author.value.trim();
+      const email = pageForm.email.value.trim();
       const title = (pageForm.title?.value || '').trim();
       const credits = pageForm.credits.value.trim();
       const section = pageForm.section.value;
@@ -592,9 +608,19 @@ import { getStorage, ref as storageRef, uploadBytes, uploadBytesResumable, getDo
         const el = pageForm.querySelector(`[data-error-for="${name}"]`);
         if (el) el.textContent = msg || '';
       };
-      ['author','content','section'].forEach(n => setErrorEl(n, ''));
+      ['author','email','content','section'].forEach(n => setErrorEl(n, ''));
       let valid = true;
       if (!author){ setErrorEl('author','Please enter your name'); valid = false; }
+      if (!email){
+        setErrorEl('email','Please enter your email');
+        valid = false;
+      } else {
+        const emailPattern = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
+        if (!emailPattern.test(email)) {
+          setErrorEl('email','Please enter a valid email');
+          valid = false;
+        }
+      }
       if (!section){ setErrorEl('section','Please choose a section'); valid = false; }
       if (!content){ setErrorEl('content','Please add your entry'); valid = false; }
       if (!valid) return;
@@ -609,11 +635,11 @@ import { getStorage, ref as storageRef, uploadBytes, uploadBytesResumable, getDo
       }
       const progressEl = progressWrap.querySelector('progress');
       try {
-        await createSubmission({ author, credits, section, eventDate, title, content, file }, pct => {
+        await createSubmission({ author, email, credits, section, eventDate, title, content, file }, pct => {
           if (progressEl) progressEl.value = pct;
         });
         pageForm.reset();
-        alert('Thank you! Your submission has been sent for review.');
+        alert('Thank you! We’ll let you know when it’s posted.');
       } catch (err) {
         alert('Submission failed. Please try again.');
         console.error(err);
@@ -739,8 +765,8 @@ import { getStorage, ref as storageRef, uploadBytes, uploadBytesResumable, getDo
         if (logoutBtn) { logoutBtn.style.display = 'none'; logoutBtn.setAttribute('disabled','true'); }
         listEl.innerHTML = '';
         if (emptyEl) {
-          emptyEl.textContent = 'Sign in with an admin Google account to review pending submissions.';
-          emptyEl.style.display = 'block';
+          emptyEl.textContent = '';
+          emptyEl.style.display = 'none';
         }
         return;
       }
@@ -995,50 +1021,11 @@ import { getStorage, ref as storageRef, uploadBytes, uploadBytesResumable, getDo
       if (el) el.textContent = msg;
     }
 
-  /* ====== (Optional) Hero Image Local Demo (kept) ====== */
-    (function initHeroUpload(){
-      const panel = document.getElementById('hero-image-panel');
-    if (!panel) return;
-      const img = document.getElementById('hero-image');
-      const trigger = document.getElementById('hero-upload-trigger');
-      const input = document.getElementById('hero-upload-input');
-      const removeBtn = document.getElementById('hero-remove-btn');
-      const KEY = 'for-beck-hero-image';
-  
-      function applyImage(dataUrl){
-        if (!img) return;
-        if (dataUrl) {
-          img.src = dataUrl;
-          img.style.display = 'block';
-          trigger.style.display = 'none';
-          removeBtn.style.display = 'block';
-        } else {
-          img.removeAttribute('src');
-          img.style.display = 'none';
-          trigger.style.display = 'flex';
-          removeBtn.style.display = 'none';
-        }
-      }
-  
-      try {
-        const saved = localStorage.getItem(KEY);
-        if (saved) applyImage(saved);
-        else applyImage('');
-    } catch {}
-  
-      trigger?.addEventListener('click', () => input?.click());
-      input?.addEventListener('change', async () => {
-        const file = input.files?.[0];
-        if (!file || !file.type.startsWith('image/')) return;
-      const r = new FileReader();
-      r.onload = () => applyImage(r.result);
-      r.readAsDataURL(file);
-      try { localStorage.setItem(KEY, ''); } catch {}
-      });
-      removeBtn?.addEventListener('click', () => {
-        applyImage('');
-      try { localStorage.removeItem(KEY); } catch {}
-      });
-    })();
+  /* ====== Static hero image ====== */
+  (function setHeroImage(){
+    const img = document.getElementById('hero-image');
+    if (!img) return;
+    if (!img.getAttribute('src')) img.remove();
+  })();
   })();
   

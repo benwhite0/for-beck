@@ -107,15 +107,8 @@
 }
 .hero-img{
   position:absolute; inset:0; width:100%; height:100%;
-  object-fit:contain; border-radius:12px; display:none
+  object-fit:cover; border-radius:12px;
 }
-.img-placeholder{
-  position:absolute; inset:0;
-  border:2px dashed var(--border); border-radius:12px;
-  display:flex; align-items:center; justify-content:center;
-  color:var(--muted); background:#FCFAF7; cursor:pointer
-}
-  .hero-remove-btn{position:absolute; top:8px; right:8px; border:0; background:rgba(255,255,255,.9); border:1px solid var(--border); border-radius:999px; width:32px; height:32px; cursor:pointer; display:none}
   
   .grid{display:grid; gap:24px}
   .grid-2{grid-template-columns:1.1fr .9fr}
@@ -208,13 +201,30 @@
   .field{display:flex; flex-direction:column; gap:6px}
   .field-wide{grid-column:1 / -1}
   .field span{font-weight:600}
-  input[type="text"], input[type="date"], input[type="file"], textarea{
+  input[type="text"], input[type="email"], input[type="date"], input[type="file"], textarea{
     width:100%; padding:.7rem .8rem; border-radius:10px; border:1px solid var(--border); background:#FCFAF7
   }
   select{width:100%; padding:.7rem .8rem; border-radius:10px; border:1px solid var(--border); background:#FCFAF7}
   textarea{resize:vertical}
   .error{color:#8A2525; min-height:1.2em}
   .form-actions{margin-top:8px; display:flex; gap:10px}
+
+  /* Admin email auth layout */
+  .admin-email-form{
+    display:none;
+    gap:8px;
+    flex-wrap:wrap;
+    align-items:center;
+  }
+  .admin-email-form input[type="email"],
+  .admin-email-form input[type="password"]{
+    width:auto;
+    flex:1 1 220px;
+    min-width:200px;
+  }
+  .admin-email-form .btn{
+    flex:0 0 auto;
+  }
   
   /* ========= Modal ========= */
   .modal{position:fixed; inset:0; display:none}
