@@ -25,7 +25,7 @@ import { getStorage, ref as storageRef, uploadBytes, uploadBytesResumable, getDo
   const auth = getAuth(app);
   const db = getFirestore(app);
   const storage = getStorage(app);
-  const ADMIN_EMAILS = ['benjaminwhite02@gmail.com', 'fran@scabetti.co.uk'];
+  const ADMIN_EMAILS = ['benjaminwhite02@gmail.com', 'fran@scabetti.co.uk', 'test@beck.com', 'beckbromleyunited@gmail.com'];
   const isAdminUser = (user) => !!(user && !user.isAnonymous && ADMIN_EMAILS.includes(user.email || ''));
 
   // Do NOT auto sign-in anonymously here to avoid overriding Google sessions.

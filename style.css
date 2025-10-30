@@ -244,11 +244,13 @@
   .stack{list-style:none; padding:0; margin:0; display:grid; gap:14px}
   .panel details > summary{list-style:none}
   details summary::-webkit-details-marker{display:none}
+  /* Desktop spacing before Approved header */
+  #admin-approved-header{margin-top:40px}
   
   /* ===== Mobile polish for Admin and Auth ===== */
   @media (max-width: 720px){
-    /* ensure equal left/right spacing for admin cards when expanded */
-    #admin-approvals .panel{margin:0 50px}
+    /* shift pending/approved admin cards like news items */
+    #admin-approvals .panel{margin-left:-5px; margin-right:20px}
     /* bigger breathing room before the Approved header */
     #admin-approved-header{margin-top:26px}
     /* keep sign-in buttons on the same row */
