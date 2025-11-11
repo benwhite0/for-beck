@@ -132,7 +132,9 @@ import { getStorage, ref as storageRef, uploadBytes, uploadBytesResumable, getDo
     const navList = nav.querySelector('.nav-list');
     if (navList && !navList.querySelector('[data-admin-link]')){
       const li = document.createElement('li');
-      li.innerHTML = '<a class="nav-link" href="../approve/" data-admin-link>Admin</a>';
+      const base = document.baseURI || location.href;
+      const url = new URL('../approve/index.html', base);
+      li.innerHTML = `<a class="nav-link" href="${url.pathname}${url.search}" data-admin-link>Admin</a>`;
       navList.appendChild(li);
     }
     }
