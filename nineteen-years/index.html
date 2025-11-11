@@ -7,20 +7,20 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Playfair+Display:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="../style.css" />
 </head>
 <body>
   <header class="site-header" role="banner">
     <div class="container header-inner">
-      <a class="brand" href="index.html"><span class="brand-mark" aria-hidden="true">✤</span><span class="brand-text">For Beck</span></a>
+      <a class="brand" href="../home/"><span class="brand-mark" aria-hidden="true">✤</span><span class="brand-text">For Beck</span></a>
       <nav class="site-nav" aria-label="Primary">
         <button class="nav-toggle" aria-expanded="false" aria-controls="nav-menu">Menu</button>
         <ul id="nav-menu" class="nav-list">
-          <li><a class="nav-link" href="index.html">Home</a></li>
-          <li><a class="nav-link is-active" href="nineteen-years.html">19 Years</a></li>
-          <li><a class="nav-link" href="action-for-change.html">Action for Change</a></li>
-          <li><a class="nav-link" href="support.html">Silver Threads</a></li>
-          <li><a class="nav-link" href="news-events.html">News & Events</a></li>
+          <li><a class="nav-link" href="../home/">Home</a></li>
+          <li><a class="nav-link is-active" href="../nineteen-years/">19 Years</a></li>
+          <li><a class="nav-link" href="../action-for-change/">Action for Change</a></li>
+          <li><a class="nav-link" href="../support/">Silver Threads</a></li>
+          <li><a class="nav-link" href="../news-events/">News & Events</a></li>
         </ul>
       </nav>
     </div>
@@ -33,27 +33,24 @@
           <h1 class="h1">19 Years</h1>
           <p>Memories, photos, videos, and words from Beck’s life.</p>
         </div>
-        <a class="btn" href="submit.html">Submit an entry</a>
+        <a class="btn" href="../submit/">Submit an entry</a>
       </div>
     </section>
 
     <section class="section">
       <div class="container">
         <!-- Feed -->
-        <ul class="card-grid" id="feed-memories" aria-live="polite" aria-busy="false">
-          <!-- JS will render stored posts here -->
-        </ul>
+        <ul class="card-grid" id="feed-memories" aria-live="polite" aria-busy="false"></ul>
         <p class="muted empty-state" data-empty-for="memories">No memories yet. Be the first to share.</p>
       </div>
     </section>
   </main>
 
-  
-
   <footer class="site-footer">
     <div class="container"><p class="small">In memory of Beck.</p></div>
   </footer>
 
-  <script type="module" src="script.js"></script>
+  <script type="module" src="../script.js"></script>
 </body>
 </html>
+

@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Silver Threads — For Beck</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Playfair+Display:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../style.css" />
+</head>
+<body>
+<header class="site-header" role="banner">
+  <div class="container header-inner">
+    <a class="brand" href="../home/"><span class="brand-mark" aria-hidden="true">✤</span><span class="brand-text">For Beck</span></a>
+    <nav class="site-nav" aria-label="Primary">
+      <button class="nav-toggle" aria-expanded="false" aria-controls="nav-menu">Menu</button>
+      <ul id="nav-menu" class="nav-list">
+        <li><a class="nav-link" href="../home/">Home</a></li>
+        <li><a class="nav-link" href="../nineteen-years/">19 Years</a></li>
+        <li><a class="nav-link" href="../action-for-change/">Action for Change</a></li>
+        <li><a class="nav-link is-active" href="../support/">Silver Threads</a></li>
+        <li><a class="nav-link" href="../news-events/">News & Events</a></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+
+<main id="content" class="site-main" tabindex="-1">
+  <section class="section page-header">
+    <div class="container header-with-cta">
+      <div>
+        <h1 class="h1">Silver Threads</h1>
+        <p class="muted">A gentle reminder that however fine it may be, there is always something to be found that glimmers.</p>
+      </div>
+      <a class="btn" href="../submit/">Submit an entry</a>
+    </div>
+  </section>
+
+  <!-- Pinned lead -->
+  <section class="section section-muted">
+    <div class="container">
+      <div class="panel">
+        <h2 class="h2">If you’re struggling</h2>
+        <p>You are not alone.</p>
+        <p><strong>PAUSE.</strong> You have not YET found a way to cope that works for you in this moment.</p>
+        <p>Consider reaching out to a trusted person or a trained listener.</p>
+        <p>
+          Chat online with <a href="https://www.papyrus-uk.org/contact-us/" target="_blank" rel="noopener">Hopeline247</a> /
+          text <a href="https://giveusashout.org/" target="_blank" rel="noopener">SHOUT</a> to 85258 or phone the
+          <a href="https://www.samaritans.org/" target="_blank" rel="noopener">Samaritans</a> on 116&nbsp;123.
+        </p>
+        <p>If you can’t think what to type or say next… simply say “hi”, or however you might greet a friend.</p>
+        <p>Scroll through the ideas below.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Tips feed -->
+  <section class="section">
+    <div class="container">
+      <h2 class="h2">Tips, ideas, and little supports</h2>
+      <p class="muted">Here we work together as a team, to share some of the things that have helped us, that might also help others, when we find it hardest to find those silver threads of joy in life.</p>
+    </div>
+    <div class="container">
+      <ul class="card-grid" id="feed-silver" aria-live="polite" aria-busy="false"></ul>
+      <p class="muted empty-state" data-empty-for="silver">No tips yet. Share something that helped you.</p>
+    </div>
+  </section>
+</main>
+
+<footer class="site-footer">
+  <div class="container"><p class="small">In memory of Beck.</p></div>
+</footer>
+
+<script type="module" src="../script.js"></script>
+</body>
+</html>
+

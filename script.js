@@ -132,7 +132,7 @@ import { getStorage, ref as storageRef, uploadBytes, uploadBytesResumable, getDo
     const navList = nav.querySelector('.nav-list');
     if (navList && !navList.querySelector('[data-admin-link]')){
       const li = document.createElement('li');
-      li.innerHTML = '<a class="nav-link" href="approve.html" data-admin-link>Admin</a>';
+      li.innerHTML = '<a class="nav-link" href="../approve/" data-admin-link>Admin</a>';
       navList.appendChild(li);
     }
     }
@@ -170,6 +170,7 @@ import { getStorage, ref as storageRef, uploadBytes, uploadBytesResumable, getDo
         case 'memories': return 'feed-memories';
         case 'actions': return 'feed-actions';
         case 'silver': return 'feed-silver';
+        case 'news': return 'news-list';
         default: return 'feed-memories';
       }
     }
@@ -293,6 +294,26 @@ import { getStorage, ref as storageRef, uploadBytes, uploadBytesResumable, getDo
     return ref.id;
   }
 
+  function captchaResponse() {
+    if (window.grecaptcha && typeof window.grecaptcha.getResponse === 'function') {
+      return window.grecaptcha.getResponse();
+    }
+    return '';
+  }
+  function resetCaptcha() {
+    if (window.grecaptcha && typeof window.grecaptcha.reset === 'function') {
+      window.grecaptcha.reset();
+    }
+  }
+  let submitFormButton;
+  window.beckRecaptchaSolved = function(){
+    if (submitFormButton) submitFormButton.disabled = false;
+  };
+  window.beckRecaptchaExpired = function(){
+    resetCaptcha();
+    if (submitFormButton) submitFormButton.disabled = true;
+  };
+
   async function approveSubmission(id) {
     await updateDoc(doc(db, 'submissions', id), { verified: true });
   }
@@ -323,7 +344,7 @@ import { getStorage, ref as storageRef, uploadBytes, uploadBytesResumable, getDo
           }
         }
       const displayTitle = (item.title && String(item.title).trim()) ? String(item.title).trim() : sanitizeTitle(item.content);
-      const u = new URL('entry.html', document.baseURI);
+      const u = new URL('../entry/', document.baseURI);
       u.searchParams.set('id', item.id);
       u.searchParams.set('section', section);
       const link = `${u.pathname}${u.search}#id=${encodeURIComponent(item.id)}&section=${encodeURIComponent(section)}`;
@@ -413,7 +434,8 @@ import { getStorage, ref as storageRef, uploadBytes, uploadBytesResumable, getDo
           const sectionOptions = `
             <option value="memories" ${section==='memories'?'selected':''}>19 Years</option>
             <option value="actions" ${section==='actions'?'selected':''}>Action for Change</option>
-            <option value="silver" ${section==='silver'?'selected':''}>Silver Threads</option>`;
+            <option value="silver" ${section==='silver'?'selected':''}>Silver Threads</option>
+            <option value="news" ${section==='news'?'selected':''}>News &amp; Events</option>`;
           const safeContent = escapeHtml(post.content || '');
           controls.innerHTML = `
             <div class="panel" style="margin-top:1rem">
@@ -477,10 +499,11 @@ import { getStorage, ref as storageRef, uploadBytes, uploadBytesResumable, getDo
   
     function sectionPage(key) {
       switch (key) {
-        case 'memories': return 'nineteen-years.html';
-        case 'actions': return 'action-for-change.html';
-        case 'silver': return 'support.html';
-        default: return 'index.html';
+        case 'memories': return '../nineteen-years/';
+        case 'actions': return '../action-for-change/';
+        case 'silver': return '../support/';
+        case 'news': return '../news-events/';
+        default: return '../home/';
       }
     }
     function sectionTitle(key) {
@@ -488,6 +511,7 @@ import { getStorage, ref as storageRef, uploadBytes, uploadBytesResumable, getDo
         case 'memories': return '19 Years';
         case 'actions': return 'Action for Change';
         case 'silver': return 'Silver Threads';
+        case 'news': return 'News & Events';
         default: return 'Home';
       }
     }
@@ -591,9 +615,13 @@ import { getStorage, ref as storageRef, uploadBytes, uploadBytesResumable, getDo
     });
   }
 
-  /* ====== Submit Page (submit.html) ====== */
+  /* ====== Submit Page (submit/) ====== */
   const pageForm = $('#moderated-form');
   if (pageForm) {
+    submitFormButton = pageForm.querySelector('button[type="submit"]');
+    if (pageForm.querySelector('.g-recaptcha') && submitFormButton) {
+      submitFormButton.disabled = true;
+    }
     pageForm.addEventListener('submit', async e => {
       e.preventDefault();
       const author = pageForm.author.value.trim();
@@ -624,6 +652,13 @@ import { getStorage, ref as storageRef, uploadBytes, uploadBytesResumable, getDo
       if (!section){ setErrorEl('section','Please choose a section'); valid = false; }
       if (!content){ setErrorEl('content','Please add your entry'); valid = false; }
       if (!valid) return;
+      if (pageForm.querySelector('.g-recaptcha')) {
+        const token = captchaResponse();
+        if (!token) {
+          alert('Please complete the reCAPTCHA before submitting.');
+          return;
+        }
+      }
       // Progress UI
       let progressWrap = pageForm.querySelector('.upload-progress');
       if (!progressWrap) {
@@ -639,6 +674,8 @@ import { getStorage, ref as storageRef, uploadBytes, uploadBytesResumable, getDo
           if (progressEl) progressEl.value = pct;
         });
         pageForm.reset();
+        resetCaptcha();
+        if (submitFormButton) submitFormButton.disabled = true;
         alert('Thank you! We’ll let you know when it’s posted.');
       } catch (err) {
         alert('Submission failed. Please try again.');
@@ -811,7 +848,8 @@ import { getStorage, ref as storageRef, uploadBytes, uploadBytesResumable, getDo
         const sectionOptions = `
           <option value="memories" ${it.section==='memories'?'selected':''}>19 Years</option>
           <option value="actions" ${it.section==='actions'?'selected':''}>Action for Change</option>
-          <option value="silver" ${it.section==='silver'?'selected':''}>Silver Threads</option>`;
+          <option value="silver" ${it.section==='silver'?'selected':''}>Silver Threads</option>
+          <option value="news" ${it.section==='news'?'selected':''}>News &amp; Events</option>`;
         return `
           <li class="panel" data-id="${it.id}">
             <details>
@@ -977,7 +1015,8 @@ import { getStorage, ref as storageRef, uploadBytes, uploadBytesResumable, getDo
         const sectionOptions = `
           <option value="memories" ${it.section==='memories'?'selected':''}>19 Years</option>
           <option value="actions" ${it.section==='actions'?'selected':''}>Action for Change</option>
-          <option value="silver" ${it.section==='silver'?'selected':''}>Silver Threads</option>`;
+          <option value="silver" ${it.section==='silver'?'selected':''}>Silver Threads</option>
+          <option value="news" ${it.section==='news'?'selected':''}>News &amp; Events</option>`;
         return `
           <li class="panel" data-id="${it.id}">
             <details>

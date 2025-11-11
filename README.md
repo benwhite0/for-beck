@@ -18,7 +18,7 @@ A small static site (HTML/CSS/JS) for sharing memories and actions in Beck’s n
 - Entry pages display the full post with media and metadata.
 
 ### Admin
-- `approve.html` lists pending items for review. Admins can approve, edit (title, content, author, credits, date, section), or delete.
+- `approve/` lists pending items for review. Admins can approve, edit (title, content, author, credits, date, section), or delete.
 - Approved items are also listed for quick edits or removal.
 - When signed in as an admin, entry pages show inline Edit/Delete controls.
 
@@ -27,11 +27,11 @@ A small static site (HTML/CSS/JS) for sharing memories and actions in Beck’s n
 - Client‑side progress indicator keeps users informed on slower networks.
 
 ### Structure
-- `index.html` — home
-- `nineteen-years.html`, `action-for-change.html`, `support.html` — section pages
-- `entry.html` — single entry view
-- `submit.html` — public submission form
-- `approve.html` — admin moderation
+- `home/` — home
+- `nineteen-years/`, `action-for-change/`, `support/`, `news-events/` — section pages
+- `entry/` — single entry view
+- `submit/` — public submission form
+- `approve/` — admin moderation
 - `script.js` — all interactive logic
 - `style.css` — styles
 
