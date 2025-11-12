@@ -369,6 +369,38 @@ import { getStorage, ref as storageRef, uploadBytes, uploadBytesResumable, getDo
     ensureCompatibleImages(feedEl);
     }
   
+  function formatNewsContent(text) {
+    return escapeHtml(text || '').replace(/\n{2,}/g, '\n\n').split('\n\n').map(
+      block => `<p>${block.replace(/\n/g, '<br />')}</p>`
+    ).join('').replace(/(<p><\/p>)+/g, '');
+  }
+
+  async function renderNewsList() {
+    const listEl = document.getElementById('news-list');
+    if (!listEl) return;
+    const posts = await fetchSectionPosts('news');
+    listEl.querySelectorAll('.js-news-dynamic').forEach(node => node.remove());
+    if (!posts.length) return;
+    const fragment = document.createDocumentFragment();
+    posts.forEach(item => {
+      const li = document.createElement('li');
+      li.className = 'js-news-dynamic';
+      const isoDate = item.eventDate || (item.postedAt?.toDate ? item.postedAt.toDate().toISOString() : item.postedAt || new Date().toISOString());
+      const displayDate = formatDate(isoDate);
+      li.innerHTML = `
+        <div class="news-item">
+          <time datetime="${isoDate}">${displayDate}</time>
+          <div class="news-body">
+            <h3 class="h3">${escapeHtml(item.title && String(item.title).trim() ? String(item.title).trim() : sanitizeTitle(item.content))}</h3>
+            ${formatNewsContent(item.content)}
+          </div>
+        </div>
+      `;
+      fragment.appendChild(li);
+    });
+    listEl.appendChild(fragment);
+  }
+
     /* ====== Entry Page Rendering ====== */
   async function renderEntryPage() {
         const entryContainer = $('#entry-container');
@@ -558,6 +590,7 @@ import { getStorage, ref as storageRef, uploadBytes, uploadBytesResumable, getDo
     renderFeed('actions', $('#feed-actions')),
     renderFeed('silver', $('#feed-silver'))
   ]);
+  await renderNewsList();
   await renderEntryPage();
     sortNewsList();
   
