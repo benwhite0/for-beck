@@ -333,8 +333,17 @@ import { getStorage, ref as storageRef, uploadBytes, uploadBytesResumable, getDo
         return;
       }
       if (emptyMsg) emptyMsg.style.display = 'none';
-  
-      feedEl.innerHTML = list.map(item => {
+
+      const sortedList = list.slice().sort(compareSubmissionsByEventDate);
+
+      feedEl.innerHTML = sortedList.map(item => {
+      const eventInfo = getEventDateInfo(item.eventDate);
+      const metaPieces = [`<span>${escapeHtml(item.author || 'Anonymous')}</span>`];
+      if (eventInfo) {
+        metaPieces.push('<span>•</span>');
+        metaPieces.push(`<time datetime="${escapeHtml(eventInfo.datetime)}">${escapeHtml(eventInfo.display)}</time>`);
+      }
+      const metaHtml = metaPieces.join('');
       let mediaHtml = '';
       if (item.mediaURL) {
           if (item.mediaType?.startsWith('image/')) {
@@ -356,9 +365,7 @@ import { getStorage, ref as storageRef, uploadBytes, uploadBytesResumable, getDo
               ${mediaHtml}
               <div class="card-body">
                 <div class="card-meta">
-                  <span>${escapeHtml(item.author || 'Anonymous')}</span>
-                  <span>•</span>
-                <time>${formatDate(item.postedAt?.toDate ? item.postedAt.toDate().toISOString() : item.postedAt)}</time>
+                  ${metaHtml}
                 </div>
               <h3 class="card-title">${escapeHtml(displayTitle)}</h3>
               </div>
@@ -381,15 +388,18 @@ import { getStorage, ref as storageRef, uploadBytes, uploadBytesResumable, getDo
     const posts = await fetchSectionPosts('news');
     listEl.querySelectorAll('.js-news-dynamic').forEach(node => node.remove());
     if (!posts.length) return;
+    const sortedPosts = posts.slice().sort(compareSubmissionsByEventDate);
     const fragment = document.createDocumentFragment();
-    posts.forEach(item => {
+    sortedPosts.forEach(item => {
       const li = document.createElement('li');
       li.className = 'js-news-dynamic';
-      const isoDate = item.eventDate || (item.postedAt?.toDate ? item.postedAt.toDate().toISOString() : item.postedAt || new Date().toISOString());
-      const displayDate = formatDate(isoDate);
+      const eventInfo = getEventDateInfo(item.eventDate);
+      const dateHtml = eventInfo
+        ? `<time class="news-date" datetime="${escapeHtml(eventInfo.datetime)}">${escapeHtml(eventInfo.display)}</time>`
+        : '';
       li.innerHTML = `
-        <div class="news-item">
-          <time datetime="${isoDate}">${displayDate}</time>
+        <div class="news-item${eventInfo ? '' : ' news-item--no-date'}">
+          ${dateHtml}
           <div class="news-body">
             <h3 class="h3">${escapeHtml(item.title && String(item.title).trim() ? String(item.title).trim() : sanitizeTitle(item.content))}</h3>
             ${formatNewsContent(item.content)}
@@ -570,6 +580,73 @@ import { getStorage, ref as storageRef, uploadBytes, uploadBytesResumable, getDo
         .replaceAll('"', '&quot;')
         .replaceAll("'", '&#39;');
     }
+    function parseDateValue(value) {
+      if (!value) return null;
+      if (typeof value === 'number' && Number.isFinite(value)) return value;
+      if (value instanceof Date) {
+        const time = value.getTime();
+        return Number.isFinite(time) ? time : null;
+      }
+      if (typeof value === 'string') {
+        const trimmed = value.trim();
+        if (!trimmed) return null;
+        const time = Date.parse(trimmed);
+        return Number.isNaN(time) ? null : time;
+      }
+      if (typeof value === 'object') {
+        if (typeof value.toDate === 'function') {
+          const d = value.toDate();
+          const time = d?.getTime?.();
+          return Number.isFinite(time) ? time : null;
+        }
+        if (typeof value.toMillis === 'function') {
+          const time = value.toMillis();
+          return Number.isFinite(time) ? time : null;
+        }
+        if (typeof value.seconds === 'number') {
+          const time = value.seconds * 1000 + Math.floor((value.nanoseconds || 0) / 1e6);
+          return Number.isFinite(time) ? time : null;
+        }
+      }
+      return null;
+    }
+    function compareSubmissionsByEventDate(a, b) {
+      const aEvent = parseDateValue(a?.eventDate);
+      const bEvent = parseDateValue(b?.eventDate);
+      const aHasEvent = aEvent !== null;
+      const bHasEvent = bEvent !== null;
+      if (aHasEvent && bHasEvent && bEvent !== aEvent) return bEvent - aEvent;
+      if (aHasEvent !== bHasEvent) return aHasEvent ? 1 : -1;
+      const aPosted = parseDateValue(a?.postedAt);
+      const bPosted = parseDateValue(b?.postedAt);
+      if (aPosted !== null && bPosted !== null && bPosted !== aPosted) return bPosted - aPosted;
+      if (aPosted !== null && bPosted === null) return -1;
+      if (aPosted === null && bPosted !== null) return 1;
+      const aId = a?.id || '';
+      const bId = b?.id || '';
+      return aId.localeCompare(bId);
+    }
+    function getEventDateInfo(eventDate) {
+      if (eventDate === undefined || eventDate === null) return null;
+      if (typeof eventDate === 'string') {
+        const trimmed = eventDate.trim();
+        if (!trimmed) return null;
+        const parsed = parseDateValue(trimmed);
+        if (parsed !== null) {
+          const iso = new Date(parsed).toISOString();
+          return { datetime: iso, display: formatDate(iso) };
+        }
+        return { datetime: trimmed, display: trimmed };
+      }
+      const parsed = parseDateValue(eventDate);
+      if (parsed !== null) {
+        const iso = new Date(parsed).toISOString();
+        return { datetime: iso, display: formatDate(iso) };
+      }
+      const fallback = String(eventDate || '').trim();
+      if (!fallback) return null;
+      return { datetime: fallback, display: fallback };
+    }
   
     /* ====== News & Events Sorting ====== */
     function sortNewsList() {
@@ -577,11 +654,19 @@ import { getStorage, ref as storageRef, uploadBytes, uploadBytesResumable, getDo
       if (!list) return;
       const items = Array.from(list.children);
       items.sort((a, b) => {
-        const ad = new Date(a.querySelector('time')?.getAttribute('datetime') || 0);
-        const bd = new Date(b.querySelector('time')?.getAttribute('datetime') || 0);
-      return bd - ad;
+        const aInfo = getNodeTimeInfo(a);
+        const bInfo = getNodeTimeInfo(b);
+        if (aInfo.hasTime && bInfo.hasTime && bInfo.time !== aInfo.time) return bInfo.time - aInfo.time;
+        if (aInfo.hasTime !== bInfo.hasTime) return aInfo.hasTime ? 1 : -1;
+      return 0;
       });
       items.forEach(item => list.appendChild(item));
+    }
+    function getNodeTimeInfo(node) {
+      const timeEl = node.querySelector('time');
+      const datetime = timeEl?.getAttribute('datetime') || '';
+      const time = parseDateValue(datetime);
+      return { hasTime: time !== null, time };
     }
   
   /* ====== Initial Rendering ====== */

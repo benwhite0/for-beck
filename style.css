@@ -272,6 +272,12 @@
   /* ========= News List ========= */
   .news-list{list-style:none; padding:0; margin:0; display:grid; gap:12px}
   .news-item{display:grid; grid-template-columns: 130px 1fr; gap:16px; background:var(--panel); border:1px solid var(--border); border-radius:12px; padding:14px}
+  .news-item.news-item--no-date{
+    grid-template-columns:1fr;
+  }
+  .news-item.news-item--no-date .news-body{
+    grid-column:1 / -1;
+  }
   .news-date{font-weight:600; color:var(--muted)}
   .news-body h3{margin:.1rem 0}
   @media (max-width: 720px){
