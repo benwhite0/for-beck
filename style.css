@@ -7,7 +7,7 @@
     --accent: #B08D57;      /* muted gold accent */
     --accent-ink: #2B2B2B;
     --border: #E6E0D6;
-    --news-mobile-max-width: 450px;
+    --news-mobile-max-width: 480px;
     --admin-mobile-max-width: 480px;
   
     --radius: 16px;
@@ -286,9 +286,9 @@
     }
     /* Keep event cards centered without forcing horizontal scroll */
     .news-item{
-      width:min(calc(92% + 15px), var(--news-mobile-max-width));
+      width:100%;
       margin-left:0;
-      margin-right:15px;
+      margin-right:0;
       grid-template-columns:1fr;
       row-gap:10px;
       padding:16px 22px;
