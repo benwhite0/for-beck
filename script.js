@@ -1132,6 +1132,7 @@ import { getStorage, ref as storageRef, uploadBytes, uploadBytesResumable, getDo
               ? `<audio controls src="${it.mediaURL}"></audio>`
               : '') : '';
         const safeContent = escapeHtml(it.content || '');
+        const safeTitle = escapeHtml((it.title && String(it.title).trim()) ? String(it.title).trim() : sanitizeTitle(it.content));
         const sectionOptions = `
           <option value="memories" ${it.section==='memories'?'selected':''}>19 Years</option>
           <option value="actions" ${it.section==='actions'?'selected':''}>Action for Change</option>
@@ -1142,7 +1143,7 @@ import { getStorage, ref as storageRef, uploadBytes, uploadBytesResumable, getDo
             <details>
               <summary>
                 <div class="small muted" data-field="meta">${it.section} • ${postedISO ? formatDate(postedISO) : ''}</div>
-                <h3 class="h3" style="margin:0.25rem 0" data-field="title">${escapeHtml(sanitizeTitle(it.content))}</h3>
+                <h3 class="h3" style="margin:0.25rem 0" data-field="title">${safeTitle}</h3>
                 <div class="small muted" data-field="byline">${escapeHtml(it.author || 'Anonymous')}${it.credits ? ' • ' + escapeHtml(it.credits) : ''}${it.eventDate ? ' • ' + escapeHtml(it.eventDate) : ''}</div>
               </summary>
               <div style="margin-top:0.5rem" data-field="media">${media}</div>
@@ -1150,6 +1151,7 @@ import { getStorage, ref as storageRef, uploadBytes, uploadBytesResumable, getDo
 
               <form class="admin-edit" hidden>
                 <div class="form-grid">
+                  <label class="field field-wide"><span>Title</span><input name="title" value="${escapeHtml(it.title || '')}"></label>
                   <label class="field field-wide"><span>Content</span><textarea name="content" rows="6">${safeContent}</textarea></label>
                   <label class="field"><span>Author</span><input name="author" value="${escapeHtml(it.author || '')}"></label>
                   <label class="field"><span>Credits</span><input name="credits" value="${escapeHtml(it.credits || '')}"></label>
