@@ -226,15 +226,18 @@
 .card-grid-memories{
   max-width:none;
   margin:0;
-  grid-template-columns:repeat(3, minmax(0, 1fr));
-  gap:20px;
+  display:block;
+  column-count:3;
+  column-gap:20px;
 }
 .card-grid-memories .card{
   min-height:0;
   gap:8px;
+  break-inside:avoid;
+  margin-bottom:20px;
 }
 .card-grid-memories .card-body{
-  padding:10px 14px;
+  padding:12px 16px;
 }
 .card-grid-memories .card-media{
   aspect-ratio:auto;
@@ -255,12 +258,12 @@
 }
 @media (max-width: 1024px){
   .card-grid-memories{
-    grid-template-columns:repeat(2, minmax(240px, 1fr));
+    column-count:2;
   }
 }
 @media (max-width: 680px){
   .card-grid-memories{
-    grid-template-columns:1fr;
+    column-count:1;
   }
 }
   
