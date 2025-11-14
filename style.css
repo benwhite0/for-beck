@@ -251,6 +251,10 @@
   --masonry-row-height:12px;
   grid-auto-rows:var(--masonry-row-height);
 }
+#feed-memories{
+  width:min(100%, 1160px);
+  margin:0 auto;
+}
 .card-grid-memories .card{
   min-height:0;
   gap:8px;
