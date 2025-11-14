@@ -115,7 +115,6 @@ import { getStorage, ref as storageRef, uploadBytes, uploadBytesResumable, getDo
     const rowHeight = parseFloat(style.gridAutoRows) || 12;
     const gap = parseFloat(style.rowGap) || 0;
     const cards = Array.from(grid.children);
-    cards.forEach(card => { card.style.gridRowEnd = 'span 1'; });
     cards.forEach(card => {
       const inner = card.firstElementChild;
       const contentHeight = (inner ? inner.scrollHeight : 0) || card.scrollHeight || card.getBoundingClientRect().height;
