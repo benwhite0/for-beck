@@ -170,6 +170,23 @@
   .page-header-compact{padding-bottom:24px}
   .page-header-compact + .section{padding-top:32px}
   .header-with-cta{display:flex; align-items:end; justify-content:space-between; gap:1rem; flex-wrap:wrap}
+  .header-with-cta--admin{
+    flex-direction:column;
+    align-items:flex-start;
+    justify-content:flex-start;
+    gap:1.5rem;
+  }
+  .header-with-cta--admin #admin-auth{
+    flex-wrap:wrap;
+    justify-content:flex-start;
+    margin-top:0;
+  }
+  .admin-submissions-heading{
+    margin:0 0 0.25rem;
+  }
+  .section-admin-list{
+    padding-top:24px;
+  }
   .section-bottom-cta{padding:24px 0 16px}
   .section-bottom-cta .header-with-cta{justify-content:flex-end}
   #admin-auth{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
@@ -500,12 +517,12 @@
   .panel details > summary{list-style:none}
   details summary::-webkit-details-marker{display:none}
   /* Desktop spacing before Approved header */
-  #admin-approved-header{margin-top:40px}
+  #admin-approved-header{margin-top:48px}
   
   /* ===== Mobile polish for Admin and Auth ===== */
   @media (max-width: 720px){
     /* bigger breathing room before the Approved header */
-    #admin-approved-header{margin-top:26px}
+    #admin-approved-header{margin-top:32px}
     /* keep sign-in buttons on the same row */
     #admin-auth{gap:8px}
     #admin-auth .btn{padding:.5rem .8rem}

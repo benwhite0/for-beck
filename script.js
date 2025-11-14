@@ -870,6 +870,15 @@ import { getStorage, ref as storageRef, uploadBytes, uploadBytesResumable, getDo
     const statusEl = $('#admin-status');
     const listEl = $('#admin-list');
     const emptyEl = $('#admin-empty');
+    let pendingHeader = $('#admin-pending-header');
+    if (!pendingHeader) {
+      pendingHeader = document.createElement('h2');
+      pendingHeader.id = 'admin-pending-header';
+      pendingHeader.className = 'h2 admin-submissions-heading';
+      pendingHeader.textContent = 'Submissions';
+      pendingHeader.style.display = 'none';
+      approvalsContainer.insertBefore(pendingHeader, approvalsContainer.firstChild);
+    }
     const emailShowBtn = $('#admin-email-show');
     const resetSignedInBtn = $('#admin-reset');
     const emailForm = $('#admin-email-form');
@@ -977,6 +986,7 @@ import { getStorage, ref as storageRef, uploadBytes, uploadBytesResumable, getDo
         if (loginBtn) { loginBtn.style.display = ''; loginBtn.removeAttribute('disabled'); }
         if (logoutBtn) { logoutBtn.style.display = 'none'; logoutBtn.setAttribute('disabled','true'); }
         listEl.innerHTML = '';
+        if (pendingHeader) pendingHeader.style.display = 'none';
         if (emptyEl) {
           emptyEl.textContent = '';
           emptyEl.style.display = 'none';
@@ -987,7 +997,9 @@ import { getStorage, ref as storageRef, uploadBytes, uploadBytesResumable, getDo
       if (loginBtn) { loginBtn.style.display = 'none'; }
       if (logoutBtn) { logoutBtn.style.display = ''; logoutBtn.removeAttribute('disabled'); }
 
+      if (pendingHeader) pendingHeader.style.display = '';
       if (!isAdminUser(user)) {
+        if (pendingHeader) pendingHeader.style.display = 'none';
         listEl.innerHTML = '';
         if (emptyEl) {
           emptyEl.textContent = 'You are signed in, but not as an admin. Pending submissions are only visible to admins.';
