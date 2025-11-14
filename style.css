@@ -118,9 +118,9 @@
       display:none;
       position:absolute;
       top:56px;
-      right:16px;
+      right:5px;
       left:auto;
-      width:min(160px, calc(100vw - 32px));
+      width:min(160px, calc(100vw - 10px));
       min-width:120px;
       padding:6px 10px;
       border:1px solid var(--border);
