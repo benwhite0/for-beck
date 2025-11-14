@@ -14,7 +14,9 @@
     <div class="container header-inner">
       <a class="brand" href="../home/"><span class="brand-mark" aria-hidden="true">✤</span><span class="brand-text">For Beck</span></a>
       <nav class="site-nav" aria-label="Primary">
-        <button class="nav-toggle" aria-expanded="false" aria-controls="nav-menu">Menu</button>
+        <button class="nav-toggle" aria-label="Toggle navigation" aria-expanded="false" aria-controls="nav-menu">
+          <span class="nav-toggle-bars" aria-hidden="true"></span>
+        </button>
         <ul id="nav-menu" class="nav-list">
           <li><a class="nav-link" href="../home/">Home</a></li>
           <li><a class="nav-link is-active" href="../nineteen-years/">19 Years</a></li>
@@ -43,7 +45,7 @@
     <section class="section">
       <div class="container">
         <!-- Feed -->
-        <ul class="card-grid" id="feed-memories" aria-live="polite" aria-busy="false"></ul>
+        <ul class="card-grid card-grid-memories" id="feed-memories" aria-live="polite" aria-busy="false"></ul>
         <p class="muted empty-state" data-empty-for="memories">No memories yet. Be the first to share.</p>
       </div>
     </section>
