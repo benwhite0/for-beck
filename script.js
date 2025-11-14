@@ -871,6 +871,7 @@ import { getStorage, ref as storageRef, uploadBytes, uploadBytesResumable, getDo
     const listEl = $('#admin-list');
     const emptyEl = $('#admin-empty');
     let pendingHeader = $('#admin-pending-header');
+    const helpText = $('#admin-help-text');
     if (!pendingHeader) {
       pendingHeader = document.createElement('h2');
       pendingHeader.id = 'admin-pending-header';
@@ -987,6 +988,7 @@ import { getStorage, ref as storageRef, uploadBytes, uploadBytesResumable, getDo
         if (logoutBtn) { logoutBtn.style.display = 'none'; logoutBtn.setAttribute('disabled','true'); }
         listEl.innerHTML = '';
         if (pendingHeader) pendingHeader.style.display = 'none';
+        if (helpText) helpText.style.display = '';
         if (emptyEl) {
           emptyEl.textContent = '';
           emptyEl.style.display = 'none';
@@ -994,12 +996,14 @@ import { getStorage, ref as storageRef, uploadBytes, uploadBytesResumable, getDo
         return;
       }
       statusEl.textContent = user.email || 'Signed in';
+      if (helpText) helpText.style.display = 'none';
       if (loginBtn) { loginBtn.style.display = 'none'; }
       if (logoutBtn) { logoutBtn.style.display = ''; logoutBtn.removeAttribute('disabled'); }
 
       if (pendingHeader) pendingHeader.style.display = '';
       if (!isAdminUser(user)) {
         if (pendingHeader) pendingHeader.style.display = 'none';
+        if (helpText) helpText.style.display = 'none';
         listEl.innerHTML = '';
         if (emptyEl) {
           emptyEl.textContent = 'You are signed in, but not as an admin. Pending submissions are only visible to admins.';
