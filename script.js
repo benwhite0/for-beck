@@ -387,8 +387,9 @@ import { getStorage, ref as storageRef, uploadBytes, uploadBytesResumable, getDo
       const metaHtml = eventInfo
         ? `<time datetime="${escapeHtml(eventInfo.datetime)}">${escapeHtml(eventInfo.display)}</time>`
         : '';
+      const hasMedia = !!item.mediaURL;
       let mediaHtml = '';
-      if (item.mediaURL) {
+      if (hasMedia) {
           if (item.mediaType?.startsWith('image/')) {
           mediaHtml = `<div class="card-media"><img alt="" src="${item.mediaURL}" /></div>`;
           } else if (item.mediaType?.startsWith('video/')) {
@@ -398,6 +399,7 @@ import { getStorage, ref as storageRef, uploadBytes, uploadBytesResumable, getDo
           }
         }
       const displayTitle = (item.title && String(item.title).trim()) ? String(item.title).trim() : sanitizeTitle(item.content);
+      const snippetText = !hasMedia ? makeSnippet(item.content, 170) : '';
       const u = new URL('../entry/', document.baseURI);
       u.searchParams.set('id', item.id);
       u.searchParams.set('section', section);
@@ -409,6 +411,7 @@ import { getStorage, ref as storageRef, uploadBytes, uploadBytesResumable, getDo
               <div class="card-body">
                 ${metaHtml ? `<div class="card-meta">${metaHtml}</div>` : ''}
                 <h3 class="card-title">${escapeHtml(displayTitle)}</h3>
+                ${snippetText ? `<p class="card-snippet">${escapeHtml(snippetText)}</p>` : ''}
               </div>
             </a>
           </li>`;
@@ -615,6 +618,15 @@ import { getStorage, ref as storageRef, uploadBytes, uploadBytesResumable, getDo
       const t = (text || '').trim().replace(/\s+/g, ' ');
       if (t.length <= 80) return t;
       return t.slice(0, 77) + '…';
+    }
+    function makeSnippet(text, maxLength = 140) {
+      const normalized = String(text || '').replace(/\s+/g, ' ').trim();
+      if (!normalized) return '';
+      if (normalized.length <= maxLength) return normalized;
+      const slice = normalized.slice(0, Math.max(0, maxLength - 3));
+      const boundary = slice.lastIndexOf(' ');
+      const trimmed = boundary > 40 ? slice.slice(0, boundary) : slice;
+      return trimmed.replace(/\s+$/, '') + '...';
     }
     function escapeHtml(str) {
       return String(str || '')
