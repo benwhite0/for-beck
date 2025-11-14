@@ -30,10 +30,15 @@
   img, video{max-width:100%; height:auto; display:block}
   audio{width:100%;}
   a{color:inherit}
-  .container{max-width:1000px; margin:0 auto; padding:0 20px}
+.container{max-width:1000px; margin:0 auto; padding:0 20px}
   @media (max-width: 480px){
     .container{padding:0 24px}
   }
+@media (min-width: 1024px){
+  .container{
+    max-width:min(1360px, calc(100vw - 24px));
+  }
+}
   
   /* ========= Header / Nav ========= */
   .site-header{
@@ -162,12 +167,21 @@
   .section{padding:56px 0}
   .section-muted{background: #F2EDE6; border-top:1px solid var(--border); border-bottom:1px solid var(--border)}
   .page-header{padding-top:72px}
+  .page-header-compact{padding-bottom:24px}
+  .page-header-compact + .section{padding-top:32px}
   .header-with-cta{display:flex; align-items:end; justify-content:space-between; gap:1rem; flex-wrap:wrap}
+  .section-bottom-cta{padding:24px 0 16px}
+  .section-bottom-cta .header-with-cta{justify-content:flex-end}
   #admin-auth{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
   
   /* ========= Hero / Panels ========= */
   .hero{padding:84px 0 48px}
-  .hero-inner{max-width:700px}
+.hero-inner{max-width:700px}
+@media (min-width: 960px){
+  .hero-inner{
+    max-width:100%;
+  }
+}
 .hero-note{
   font-size:1.1rem;
   margin:0 0 1.6rem;
@@ -185,6 +199,11 @@
   font-family:var(--font-display);
   color:var(--accent);
   margin-right:0.35rem;
+}
+@media (min-width: 960px){
+  .hero-note{
+    max-width:none;
+  }
 }
   .panel{
     background:var(--panel); border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow);
@@ -226,15 +245,15 @@
 .card-grid-memories{
   max-width:none;
   margin:0;
-  display:block;
-  column-count:3;
-  column-gap:20px;
+  display:grid;
+  grid-template-columns:repeat(3, minmax(0, 1fr));
+  gap:20px;
+  --masonry-row-height:12px;
+  grid-auto-rows:var(--masonry-row-height);
 }
 .card-grid-memories .card{
   min-height:0;
   gap:8px;
-  break-inside:avoid;
-  margin-bottom:20px;
 }
 .card-grid-memories .card-body{
   padding:12px 16px;
@@ -258,12 +277,14 @@
 }
 @media (max-width: 1024px){
   .card-grid-memories{
-    column-count:2;
+    grid-template-columns:repeat(2, minmax(0, 1fr));
+    gap:20px;
   }
 }
-@media (max-width: 680px){
+@media (max-width: 720px){
   .card-grid-memories{
-    column-count:1;
+    grid-template-columns:repeat(2, minmax(0, 1fr));
+    gap:16px;
   }
 }
   
@@ -459,7 +480,7 @@
   }
   
   /* ========= Footer ========= */
-  .site-footer{padding:36px 0; border-top:1px solid var(--border); margin-top:40px}
+  .site-footer{padding:24px 0; border-top:1px solid var(--border); margin-top:18px}
   
   /* ========= Utilities ========= */
   .empty-state{margin-top:6px}

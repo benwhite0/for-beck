@@ -99,6 +99,53 @@ import { getStorage, ref as storageRef, uploadBytes, uploadBytesResumable, getDo
     }
   }
 
+  const masonryResizeHandlers = new WeakMap();
+
+  const debounce = (fn, wait = 120) => {
+    let timer;
+    return (...args) => {
+      clearTimeout(timer);
+      timer = setTimeout(() => fn(...args), wait);
+    };
+  };
+
+  function applyMasonryLayout(grid){
+    if (!grid || !grid.classList.contains('card-grid-memories')) return;
+    const style = getComputedStyle(grid);
+    const rowHeight = parseFloat(style.gridAutoRows) || 12;
+    const gap = parseFloat(style.rowGap) || 0;
+    const cards = Array.from(grid.children);
+    cards.forEach(card => { card.style.gridRowEnd = 'span 1'; });
+    cards.forEach(card => {
+      const inner = card.firstElementChild;
+      const contentHeight = (inner ? inner.scrollHeight : 0) || card.scrollHeight || card.getBoundingClientRect().height;
+      const totalHeight = contentHeight + gap;
+      const span = Math.max(1, Math.ceil(totalHeight / (rowHeight + gap)));
+      card.style.gridRowEnd = `span ${span}`;
+    });
+  }
+
+  function setupMemoriesMasonry(grid){
+    if (!grid) return;
+    const refresh = () => applyMasonryLayout(grid);
+    requestAnimationFrame(refresh);
+    grid.querySelectorAll('img, video, audio').forEach(media => {
+      if (media.dataset.masonryBound === '1') return;
+      const onLoad = () => refresh();
+      media.addEventListener('load', onLoad, { once: true });
+      media.addEventListener('loadeddata', onLoad, { once: true });
+      media.dataset.masonryBound = '1';
+      if (('complete' in media && media.complete) || media.readyState >= 2) {
+        onLoad();
+      }
+    });
+    if (!masonryResizeHandlers.has(grid)) {
+      const resizeHandler = debounce(refresh, 180);
+      masonryResizeHandlers.set(grid, resizeHandler);
+      window.addEventListener('resize', resizeHandler);
+    }
+  }
+
   /* ====== Firebase Init ====== */
   const firebaseConfig = {
     apiKey: "AIzaSyChj8gAgnTq2H2YGMd0iHI4W44ztidh9K8",
@@ -338,12 +385,9 @@ import { getStorage, ref as storageRef, uploadBytes, uploadBytesResumable, getDo
 
       feedEl.innerHTML = sortedList.map(item => {
       const eventInfo = getEventDateInfo(item.eventDate);
-      const metaPieces = [`<span>${escapeHtml(item.author || 'Anonymous')}</span>`];
-      if (eventInfo) {
-        metaPieces.push('<span>•</span>');
-        metaPieces.push(`<time datetime="${escapeHtml(eventInfo.datetime)}">${escapeHtml(eventInfo.display)}</time>`);
-      }
-      const metaHtml = metaPieces.join('');
+      const metaHtml = eventInfo
+        ? `<time datetime="${escapeHtml(eventInfo.datetime)}">${escapeHtml(eventInfo.display)}</time>`
+        : '';
       let mediaHtml = '';
       if (item.mediaURL) {
           if (item.mediaType?.startsWith('image/')) {
@@ -364,16 +408,17 @@ import { getStorage, ref as storageRef, uploadBytes, uploadBytesResumable, getDo
             <a href="${link}" class="card-link-wrap">
               ${mediaHtml}
               <div class="card-body">
-                <div class="card-meta">
-                  ${metaHtml}
-                </div>
-              <h3 class="card-title">${escapeHtml(displayTitle)}</h3>
+                ${metaHtml ? `<div class="card-meta">${metaHtml}</div>` : ''}
+                <h3 class="card-title">${escapeHtml(displayTitle)}</h3>
               </div>
             </a>
           </li>`;
       }).join('');
     feedEl.setAttribute('aria-busy', 'false');
     ensureCompatibleImages(feedEl);
+    if (section === 'memories') {
+      setupMemoriesMasonry(feedEl);
+    }
     }
   
   function formatNewsContent(text) {
