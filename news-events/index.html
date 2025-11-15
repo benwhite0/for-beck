@@ -20,7 +20,6 @@
       <ul id="nav-menu" class="nav-list">
         <li><a class="nav-link" href="../home/">Home</a></li>
         <li><a class="nav-link" href="../nineteen-years/">19 Years</a></li>
-        <li><a class="nav-link" href="../action-for-change/">Action for Change</a></li>
         <li><a class="nav-link" href="../support/">Silver Threads</a></li>
         <li><a class="nav-link is-active" href="../news-events/">News & Events</a></li>
       </ul>
@@ -33,7 +32,7 @@
     <div class="container header-with-cta">
       <div>
         <h1 class="h1">News & Events</h1>
-        <p>Simple list in date order with upcoming items and past recaps.</p>
+        <p>Things we’re continuing to do — projects, fundraisers, kindnesses, big or small.</p>
       </div>
       <div class="smile-stack" aria-hidden="true">
         <div class="beck-smile-spot smile-compact">
@@ -46,8 +45,18 @@
 
   <section class="section">
     <div class="container">
+      <div class="view-toggle" data-view-group>
+        <button class="view-toggle-btn is-active" type="button" data-view-toggle="gallery" aria-pressed="true" aria-controls="news-gallery-panel">Gallery view</button>
+        <button class="view-toggle-btn" type="button" data-view-toggle="list" aria-pressed="false" aria-controls="news-list-panel">List view</button>
+      </div>
+    </div>
+    <div class="container view-panel is-active" data-view-panel="gallery" id="news-gallery-panel">
+      <ul class="card-grid card-grid-memories" id="feed-actions" aria-live="polite" aria-busy="false"></ul>
+      <p class="muted empty-state" data-empty-for="actions">No projects yet. Share something we’re doing for Beck.</p>
+    </div>
+    <div class="container view-panel" data-view-panel="list" id="news-list-panel" hidden>
       <ol class="news-list" id="news-list" aria-live="polite">
-        <li>
+        <li class="js-news-dynamic">
           <div class="news-item">
             <time datetime="2024-06-22" class="news-date">Jun 22, 2024</time>
             <div class="news-body">
@@ -56,7 +65,7 @@
             </div>
           </div>
         </li>
-        <li>
+        <li class="js-news-dynamic">
           <div class="news-item">
             <time datetime="2023-11-24" class="news-date">Nov 24, 2023</time>
             <div class="news-body">

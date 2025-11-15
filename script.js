@@ -418,7 +418,7 @@ import { getStorage, ref as storageRef, uploadBytes, uploadBytesResumable, getDo
       }).join('');
     feedEl.setAttribute('aria-busy', 'false');
     ensureCompatibleImages(feedEl);
-    if (section === 'memories' || section === 'silver') {
+    if (section === 'memories' || section === 'silver' || section === 'actions') {
       setupMemoriesMasonry(feedEl);
     }
     }
@@ -524,9 +524,9 @@ import { getStorage, ref as storageRef, uploadBytes, uploadBytesResumable, getDo
           }
           const sectionOptions = `
             <option value="memories" ${section==='memories'?'selected':''}>19 Years</option>
-            <option value="actions" ${section==='actions'?'selected':''}>Action for Change</option>
+            <option value="actions" ${section==='actions'?'selected':''}>News &amp; Events — Gallery</option>
             <option value="silver" ${section==='silver'?'selected':''}>Silver Threads</option>
-            <option value="news" ${section==='news'?'selected':''}>News &amp; Events</option>`;
+            <option value="news" ${section==='news'?'selected':''}>News &amp; Events — List</option>`;
           const safeContent = escapeHtml(post.content || '');
           controls.innerHTML = `
             <div class="panel" style="margin-top:1rem">
@@ -591,18 +591,18 @@ import { getStorage, ref as storageRef, uploadBytes, uploadBytesResumable, getDo
     function sectionPage(key) {
       switch (key) {
         case 'memories': return '../nineteen-years/';
-        case 'actions': return '../action-for-change/';
+        case 'actions': return '../news-events/#view=gallery';
         case 'silver': return '../support/';
-        case 'news': return '../news-events/';
+        case 'news': return '../news-events/#view=list';
         default: return '../home/';
       }
     }
     function sectionTitle(key) {
       switch (key) {
         case 'memories': return '19 Years';
-        case 'actions': return 'Action for Change';
+        case 'actions': return 'News & Events — Gallery';
         case 'silver': return 'Silver Threads';
-        case 'news': return 'News & Events';
+        case 'news': return 'News & Events — List';
         default: return 'Home';
       }
     }
@@ -735,6 +735,54 @@ import { getStorage, ref as storageRef, uploadBytes, uploadBytesResumable, getDo
   await renderEntryPage();
     sortNewsList();
   
+  /* ====== News & Events view toggle ====== */
+  const viewToggleButtons = $$('[data-view-toggle]');
+  const viewPanels = $$('[data-view-panel]');
+  if (viewToggleButtons.length && viewPanels.length) {
+    const setView = (target, skipHashUpdate = false) => {
+      const normalized = target === 'list' ? 'list' : 'gallery';
+      viewToggleButtons.forEach(btn => {
+        const isMatch = btn.getAttribute('data-view-toggle') === normalized;
+        btn.classList.toggle('is-active', isMatch);
+        btn.setAttribute('aria-pressed', String(isMatch));
+      });
+      viewPanels.forEach(panel => {
+        const isMatch = panel.getAttribute('data-view-panel') === normalized;
+        panel.hidden = !isMatch;
+        panel.classList.toggle('is-active', isMatch);
+      });
+      if (normalized === 'gallery') {
+        const galleryGrid = document.getElementById('feed-actions');
+        if (galleryGrid) setupMemoriesMasonry(galleryGrid);
+      }
+      if (!skipHashUpdate) {
+        const hashParams = new URLSearchParams((location.hash || '').replace(/^#/, ''));
+        hashParams.set('view', normalized);
+        const nextHash = hashParams.toString();
+        if (nextHash) {
+          location.hash = nextHash;
+        } else {
+          history.replaceState(null, document.title, location.pathname + location.search);
+        }
+      }
+    };
+
+    viewToggleButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const target = btn.getAttribute('data-view-toggle') || 'gallery';
+        setView(target);
+      });
+    });
+
+    const applyViewFromHash = () => {
+      const hashParams = new URLSearchParams((location.hash || '').replace(/^#/, ''));
+      const view = hashParams.get('view') || 'gallery';
+      setView(view, true);
+    };
+    window.addEventListener('hashchange', applyViewFromHash);
+    applyViewFromHash();
+  }
+
   /* ====== Public Submit (modal form if present) ====== */
   if (modalForm) {
     modalForm.addEventListener('submit', async e => {
@@ -1039,9 +1087,9 @@ import { getStorage, ref as storageRef, uploadBytes, uploadBytesResumable, getDo
         const safeContent = escapeHtml(it.content || '');
         const sectionOptions = `
           <option value="memories" ${it.section==='memories'?'selected':''}>19 Years</option>
-          <option value="actions" ${it.section==='actions'?'selected':''}>Action for Change</option>
+            <option value="actions" ${it.section==='actions'?'selected':''}>News &amp; Events — Gallery</option>
           <option value="silver" ${it.section==='silver'?'selected':''}>Silver Threads</option>
-          <option value="news" ${it.section==='news'?'selected':''}>News &amp; Events</option>`;
+          <option value="news" ${it.section==='news'?'selected':''}>News &amp; Events — List</option>`;
         return `
           <li class="panel" data-id="${it.id}">
             <details>
@@ -1207,9 +1255,9 @@ import { getStorage, ref as storageRef, uploadBytes, uploadBytesResumable, getDo
         const safeTitle = escapeHtml((it.title && String(it.title).trim()) ? String(it.title).trim() : sanitizeTitle(it.content));
         const sectionOptions = `
           <option value="memories" ${it.section==='memories'?'selected':''}>19 Years</option>
-          <option value="actions" ${it.section==='actions'?'selected':''}>Action for Change</option>
+            <option value="actions" ${it.section==='actions'?'selected':''}>News &amp; Events — Gallery</option>
           <option value="silver" ${it.section==='silver'?'selected':''}>Silver Threads</option>
-          <option value="news" ${it.section==='news'?'selected':''}>News &amp; Events</option>`;
+          <option value="news" ${it.section==='news'?'selected':''}>News &amp; Events — List</option>`;
         return `
           <li class="panel" data-id="${it.id}">
             <details>

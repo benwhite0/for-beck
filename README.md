@@ -4,7 +4,7 @@ A small static site (HTML/CSS/JS) for sharing memories and actions in Beck’s n
 
 ### Sections
 - 19 Years — memories and stories
-- Action for Change — projects and fundraisers
+- News & Events — projects, fundraisers, kindnesses, gatherings
 - Silver Threads — gentle tips and small supports
 
 ### Submissions
