@@ -274,7 +274,8 @@
   --masonry-row-height:12px;
   grid-auto-rows:var(--masonry-row-height);
 }
-#feed-memories{
+#feed-memories,
+#feed-silver{
   width:min(100%, 1160px);
   margin:0 auto;
 }

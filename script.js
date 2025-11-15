@@ -418,7 +418,7 @@ import { getStorage, ref as storageRef, uploadBytes, uploadBytesResumable, getDo
       }).join('');
     feedEl.setAttribute('aria-busy', 'false');
     ensureCompatibleImages(feedEl);
-    if (section === 'memories') {
+    if (section === 'memories' || section === 'silver') {
       setupMemoriesMasonry(feedEl);
     }
     }
