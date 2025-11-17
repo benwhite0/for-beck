@@ -40,16 +40,23 @@ import { getStorage, ref as storageRef, uploadBytes, uploadBytesResumable, getDo
   async function convertHeicFile(file){
     const looksHeic = /image\/(heic|heif)/i.test(file?.type || '') || HEIC_EXT_RE.test(file?.name || '');
     if (!looksHeic || !file) return file;
+    console.info('[heic] attempting conversion', { name: file.name, type: file.type, size: file.size });
     try {
       await loadHeic2Any();
       try {
         const webpBlob = await window.heic2any({ blob: file, toType: 'image/webp', quality: 0.86 });
-        return new File([webpBlob], renameWithExt(file.name, '.webp'), { type: 'image/webp' });
-      } catch {
+        const converted = new File([webpBlob], renameWithExt(file.name, '.webp'), { type: 'image/webp' });
+        console.info('[heic] converted to webp', { type: converted.type, size: converted.size });
+        return converted;
+      } catch (errWebp) {
+        console.warn('[heic] webp conversion failed, retrying jpeg', errWebp);
         const jpgBlob = await window.heic2any({ blob: file, toType: 'image/jpeg', quality: 0.88 });
-        return new File([jpgBlob], renameWithExt(file.name, '.jpg'), { type: 'image/jpeg' });
+        const converted = new File([jpgBlob], renameWithExt(file.name, '.jpg'), { type: 'image/jpeg' });
+        console.info('[heic] converted to jpeg', { type: converted.type, size: converted.size });
+        return converted;
       }
-    } catch {
+    } catch (err) {
+      console.error('[heic] conversion failed, returning original', err);
       return file;
     }
   }
@@ -295,11 +302,20 @@ import { getStorage, ref as storageRef, uploadBytes, uploadBytesResumable, getDo
     // Prepare file: compress images; enforce size/type limits
     let prepared = file;
     if (file.type?.startsWith('image/')) {
+      const originalMeta = { name: file.name, type: file.type, size: file.size };
       prepared = await compressImageIfNeeded(file);
+      if (prepared !== file) {
+        console.info('[upload] image prepared', {
+          original: originalMeta,
+          prepared: { name: prepared.name, type: prepared.type, size: prepared.size }
+        });
+      } else {
+        console.info('[upload] image unchanged', originalMeta);
+      }
     }
-    const MAX_BYTES = 10 * 1024 * 1024; // 10MB safeguard (mirrors rules)
+    const MAX_BYTES = 50 * 1024 * 1024; // 50MB safeguard (mirrors rules)
     if (prepared.size > MAX_BYTES) {
-      throw new Error('File too large. Please choose a file under 10 MB.');
+      throw new Error('File too large. Please choose a file under 50 MB.');
     }
 
     const fileName = `${Date.now()}-${prepared.name}`;
@@ -316,8 +332,10 @@ import { getStorage, ref as storageRef, uploadBytes, uploadBytesResumable, getDo
           } catch {}
         }, reject, resolve);
       });
+      console.info('[upload] completed with resumable task', { bytes: prepared.size, path });
     } else {
       await uploadBytes(ref, prepared, { contentType: prepared.type });
+      console.info('[upload] completed without progress listener', { bytes: prepared.size, path });
     }
     const url = await getDownloadURL(ref);
     return { mediaURL: url, mediaType: prepared.type };
@@ -873,7 +891,8 @@ import { getStorage, ref as storageRef, uploadBytes, uploadBytesResumable, getDo
         closeModal();
         alert('Thank you! We’ll let you know when it’s posted.');
       } catch (err) {
-        alert('Failed to submit. Please try again.');
+        const message = getSubmissionErrorMessage(err, 'Submission failed. Please try again.');
+        alert(message);
         console.error(err);
       } finally {
         if (progressWrap) progressWrap.remove();
@@ -944,7 +963,8 @@ import { getStorage, ref as storageRef, uploadBytes, uploadBytesResumable, getDo
         if (submitFormButton) submitFormButton.disabled = true;
         alert('Thank you! We’ll let you know when it’s posted.');
       } catch (err) {
-        alert('Submission failed. Please try again.');
+        const message = getSubmissionErrorMessage(err, 'Submission failed. Please try again.');
+        alert(message);
         console.error(err);
       } finally {
         if (progressWrap) progressWrap.remove();
@@ -1343,6 +1363,12 @@ import { getStorage, ref as storageRef, uploadBytes, uploadBytesResumable, getDo
     const el = form.querySelector(`[data-error-for="${name}"]`);
       if (el) el.textContent = msg;
     }
+  function getSubmissionErrorMessage(err, fallback) {
+    if (!err) return fallback;
+    if (typeof err === 'string') return err;
+    if (typeof err.message === 'string' && err.message.trim()) return err.message.trim();
+    return fallback;
+  }
 
   /* ====== Static hero image ====== */
   (function setHeroImage(){
