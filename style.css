@@ -293,6 +293,9 @@
 .view-panel[hidden]{
   display:none;
 }
+.memories-sort{
+  margin-bottom:1.5rem;
+}
   .card-meta{display:flex; gap:10px; flex-wrap:wrap; color:var(--muted); font-size:.9rem}
   .card-title{font-family:var(--font-display); font-size:20px; margin:.1rem 0}
 

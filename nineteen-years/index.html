@@ -21,6 +21,7 @@
           <li><a class="nav-link" href="../home/">Home</a></li>
           <li><a class="nav-link is-active" href="../nineteen-years/">19 Years</a></li>
           <li><a class="nav-link" href="../support/">Silver Threads</a></li>
+          <li><a class="nav-link" href="../saftey-plan/">Saftey Plan</a></li>
           <li><a class="nav-link" href="../news-events/">News & Events</a></li>
         </ul>
       </nav>
@@ -43,6 +44,13 @@
 
     <section class="section">
       <div class="container">
+        <div class="memories-sort" role="region" aria-label="Sort 19 Years entries">
+          <div class="view-toggle" role="toolbar" aria-label="Sort memories">
+            <button class="view-toggle-btn" type="button" data-memories-sort="random" aria-pressed="false">Random</button>
+            <button class="view-toggle-btn" type="button" data-memories-sort="asc" aria-pressed="false">Born to 19</button>
+            <button class="view-toggle-btn" type="button" data-memories-sort="desc" aria-pressed="false">19 to Born</button>
+          </div>
+        </div>
         <!-- Feed -->
         <ul class="card-grid card-grid-memories" id="feed-memories" aria-live="polite" aria-busy="false"></ul>
         <p class="muted empty-state" data-empty-for="memories">No memories yet. Be the first to share.</p>

@@ -152,6 +152,119 @@ import { getStorage, ref as storageRef, uploadBytes, uploadBytesResumable, getDo
     }
   }
 
+  const memoriesState = {
+    order: 'random',
+    lastApplied: '',
+    list: [],
+    feedEl: null,
+    buttons: []
+  };
+
+  function shuffleArray(list){
+    const arr = list.slice();
+    for (let i = arr.length - 1; i > 0; i -= 1) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  }
+
+  function renderFeedListToElement(feedEl, list, section){
+    if (!feedEl) return;
+    const itemsHtml = (list || []).map(item => {
+      const eventInfo = getEventDateInfo(item.eventDate);
+      const metaHtml = eventInfo
+        ? `<time datetime="${escapeHtml(eventInfo.datetime)}">${escapeHtml(eventInfo.display)}</time>`
+        : '';
+      const hasMedia = !!item.mediaURL;
+      let mediaHtml = '';
+      if (hasMedia) {
+        if (item.mediaType?.startsWith('image/')) {
+          mediaHtml = `<div class="card-media"><img alt="" src="${item.mediaURL}" /></div>`;
+        } else if (item.mediaType?.startsWith('video/')) {
+          mediaHtml = `<div class="card-media"><video controls src="${item.mediaURL}"></video></div>`;
+        } else if (item.mediaType?.startsWith('audio/')) {
+          mediaHtml = `<div class="card-media"><audio controls src="${item.mediaURL}"></audio></div>`;
+        }
+      }
+      const displayTitle = (item.title && String(item.title).trim()) ? String(item.title).trim() : sanitizeTitle(item.content);
+      const snippetText = !hasMedia ? makeSnippet(item.content, 170) : '';
+      const u = new URL('../entry/', document.baseURI);
+      u.searchParams.set('id', item.id);
+      u.searchParams.set('section', section);
+      const link = `${u.pathname}${u.search}#id=${encodeURIComponent(item.id)}&section=${encodeURIComponent(section)}`;
+      return `
+          <li class="card" role="article">
+            <a href="${link}" class="card-link-wrap">
+              ${mediaHtml}
+              <div class="card-body">
+                ${metaHtml ? `<div class="card-meta">${metaHtml}</div>` : ''}
+                <h3 class="card-title">${escapeHtml(displayTitle)}</h3>
+                ${snippetText ? `<p class="card-snippet">${escapeHtml(snippetText)}</p>` : ''}
+              </div>
+            </a>
+          </li>`;
+    }).join('');
+    feedEl.innerHTML = itemsHtml;
+    feedEl.setAttribute('aria-busy', 'false');
+    ensureCompatibleImages(feedEl);
+    if (section === 'memories' || section === 'silver' || section === 'actions') {
+      setupMemoriesMasonry(feedEl);
+    }
+  }
+
+  function getMemoriesOrderedList(list, order){
+    const arr = list.slice();
+    switch (order) {
+      case 'asc':
+        return arr.sort(compareSubmissionsByEventDateAsc);
+      case 'desc':
+        return arr.sort(compareSubmissionsByEventDate);
+      case 'random':
+      default:
+        return shuffleArray(arr);
+    }
+  }
+
+  function updateMemoriesSortButtonsState(activeOrder, disabled = false){
+    memoriesState.buttons.forEach(btn => {
+      const order = btn.getAttribute('data-memories-sort') || '';
+      const isActive = !disabled && order === activeOrder;
+      btn.classList.toggle('is-active', isActive);
+      btn.setAttribute('aria-pressed', String(isActive));
+      btn.disabled = disabled;
+    });
+  }
+
+  function applyMemoriesSort(order, { force = false } = {}){
+    if (order) memoriesState.order = order;
+    const targetOrder = memoriesState.order || 'random';
+    if (!memoriesState.feedEl || !memoriesState.list.length) {
+      updateMemoriesSortButtonsState(targetOrder, true);
+      return;
+    }
+    if (!force && targetOrder !== 'random' && memoriesState.lastApplied === targetOrder) {
+      updateMemoriesSortButtonsState(targetOrder, false);
+      return;
+    }
+    const arranged = getMemoriesOrderedList(memoriesState.list, targetOrder);
+    renderFeedListToElement(memoriesState.feedEl, arranged, 'memories');
+    memoriesState.lastApplied = targetOrder;
+    updateMemoriesSortButtonsState(targetOrder, false);
+  }
+
+  const memoriesSortButtons = $$('[data-memories-sort]');
+  if (memoriesSortButtons.length) {
+    memoriesState.buttons = memoriesSortButtons;
+    updateMemoriesSortButtonsState(memoriesState.order, true);
+    memoriesSortButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const nextOrder = btn.getAttribute('data-memories-sort') || 'random';
+        applyMemoriesSort(nextOrder);
+      });
+    });
+  }
+
   /* ====== Firebase Init ====== */
   const firebaseConfig = {
     apiKey: "AIzaSyChj8gAgnTq2H2YGMd0iHI4W44ztidh9K8",
@@ -416,51 +529,26 @@ import { getStorage, ref as storageRef, uploadBytes, uploadBytesResumable, getDo
         if (emptyMsg) emptyMsg.style.display = 'block';
         feedEl.innerHTML = '';
       feedEl.setAttribute('aria-busy', 'false');
+      if (section === 'memories') {
+        memoriesState.list = [];
+        memoriesState.feedEl = feedEl;
+        memoriesState.lastApplied = '';
+        updateMemoriesSortButtonsState(memoriesState.order, true);
+      }
         return;
       }
       if (emptyMsg) emptyMsg.style.display = 'none';
 
-      const sortedList = list.slice().sort(compareSubmissionsByEventDate);
-
-      feedEl.innerHTML = sortedList.map(item => {
-      const eventInfo = getEventDateInfo(item.eventDate);
-      const metaHtml = eventInfo
-        ? `<time datetime="${escapeHtml(eventInfo.datetime)}">${escapeHtml(eventInfo.display)}</time>`
-        : '';
-      const hasMedia = !!item.mediaURL;
-      let mediaHtml = '';
-      if (hasMedia) {
-          if (item.mediaType?.startsWith('image/')) {
-          mediaHtml = `<div class="card-media"><img alt="" src="${item.mediaURL}" /></div>`;
-          } else if (item.mediaType?.startsWith('video/')) {
-          mediaHtml = `<div class="card-media"><video controls src="${item.mediaURL}"></video></div>`;
-          } else if (item.mediaType?.startsWith('audio/')) {
-          mediaHtml = `<div class="card-media"><audio controls src="${item.mediaURL}"></audio></div>`;
-          }
-        }
-      const displayTitle = (item.title && String(item.title).trim()) ? String(item.title).trim() : sanitizeTitle(item.content);
-      const snippetText = !hasMedia ? makeSnippet(item.content, 170) : '';
-      const u = new URL('../entry/', document.baseURI);
-      u.searchParams.set('id', item.id);
-      u.searchParams.set('section', section);
-      const link = `${u.pathname}${u.search}#id=${encodeURIComponent(item.id)}&section=${encodeURIComponent(section)}`;
-        return `
-          <li class="card" role="article">
-            <a href="${link}" class="card-link-wrap">
-              ${mediaHtml}
-              <div class="card-body">
-                ${metaHtml ? `<div class="card-meta">${metaHtml}</div>` : ''}
-                <h3 class="card-title">${escapeHtml(displayTitle)}</h3>
-                ${snippetText ? `<p class="card-snippet">${escapeHtml(snippetText)}</p>` : ''}
-              </div>
-            </a>
-          </li>`;
-      }).join('');
-    feedEl.setAttribute('aria-busy', 'false');
-    ensureCompatibleImages(feedEl);
-    if (section === 'memories' || section === 'silver' || section === 'actions') {
-      setupMemoriesMasonry(feedEl);
+    if (section === 'memories') {
+      memoriesState.list = list.slice();
+      memoriesState.feedEl = feedEl;
+      memoriesState.lastApplied = '';
+      applyMemoriesSort(memoriesState.order, { force: true });
+      return;
     }
+
+    const sortedList = list.slice().sort(compareSubmissionsByEventDate);
+    renderFeedListToElement(feedEl, sortedList, section);
     }
   
   function formatNewsContent(text) {
@@ -711,6 +799,9 @@ import { getStorage, ref as storageRef, uploadBytes, uploadBytesResumable, getDo
         }
       }
       return null;
+    }
+    function compareSubmissionsByEventDateAsc(a, b) {
+      return compareSubmissionsByEventDate(b, a);
     }
     function compareSubmissionsByEventDate(a, b) {
       const aEvent = parseDateValue(a?.eventDate);
