@@ -502,6 +502,25 @@
   }
   .news-date{font-weight:600; color:var(--muted)}
   .news-body h3{margin:.1rem 0}
+  .news-list-divider{
+    display:flex;
+    align-items:center;
+    gap:0.75rem;
+    color:var(--muted);
+    font-size:0.85rem;
+    font-weight:600;
+    text-transform:uppercase;
+    letter-spacing:0.08em;
+    padding:4px 0;
+  }
+  .news-list-divider span[aria-hidden="true"]{
+    flex:1;
+    height:1px;
+    background:var(--border);
+  }
+  .news-divider-label{
+    white-space:nowrap;
+  }
   @media (max-width: 720px){
     .page-header{
       padding-bottom:0px;

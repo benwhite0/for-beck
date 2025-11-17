@@ -433,13 +433,14 @@ import { getStorage, ref as storageRef, uploadBytes, uploadBytesResumable, getDo
     const listEl = document.getElementById('news-list');
     if (!listEl) return;
     const posts = await fetchSectionPosts('news');
-    listEl.querySelectorAll('.js-news-dynamic').forEach(node => node.remove());
+    listEl.querySelectorAll('.js-news-dynamic, .news-list-divider').forEach(node => node.remove());
     if (!posts.length) return;
     const sortedPosts = posts.slice().sort(compareSubmissionsByEventDate);
     const fragment = document.createDocumentFragment();
     sortedPosts.forEach(item => {
       const li = document.createElement('li');
       li.className = 'js-news-dynamic';
+      const eventTime = parseDateValue(item.eventDate);
       const eventInfo = getEventDateInfo(item.eventDate);
       const dateHtml = eventInfo
         ? `<time class="news-date" datetime="${escapeHtml(eventInfo.datetime)}">${escapeHtml(eventInfo.display)}</time>`
@@ -453,6 +454,11 @@ import { getStorage, ref as storageRef, uploadBytes, uploadBytesResumable, getDo
           </div>
         </div>
       `;
+      if (eventTime !== null) {
+        li.dataset.eventTime = String(eventTime);
+      } else if (li.dataset.eventTime) {
+        delete li.dataset.eventTime;
+      }
       fragment.appendChild(li);
     });
     listEl.appendChild(fragment);
@@ -708,22 +714,58 @@ import { getStorage, ref as storageRef, uploadBytes, uploadBytesResumable, getDo
     function sortNewsList() {
       const list = document.getElementById('news-list');
       if (!list) return;
-      const items = Array.from(list.children);
-      items.sort((a, b) => {
-        const aInfo = getNodeTimeInfo(a);
-        const bInfo = getNodeTimeInfo(b);
-        if (aInfo.hasTime && bInfo.hasTime && bInfo.time !== aInfo.time) return bInfo.time - aInfo.time;
-        if (aInfo.hasTime !== bInfo.hasTime) return aInfo.hasTime ? 1 : -1;
+    const existingDivider = list.querySelector('.news-list-divider');
+    if (existingDivider) existingDivider.remove();
+    const items = Array.from(list.children).filter(item => !item.classList.contains('news-list-divider'));
+    if (!items.length) return;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const todayMs = today.getTime();
+    items.sort((a, b) => {
+      const aInfo = getNodeTimeInfo(a);
+      const bInfo = getNodeTimeInfo(b);
+      const aUpcoming = aInfo.hasTime && aInfo.time !== null && aInfo.time >= todayMs;
+      const bUpcoming = bInfo.hasTime && bInfo.time !== null && bInfo.time >= todayMs;
+      if (aUpcoming !== bUpcoming) return aUpcoming ? -1 : 1;
+      if (aInfo.hasTime && bInfo.hasTime && bInfo.time !== aInfo.time) return bInfo.time - aInfo.time;
+      if (aInfo.hasTime !== bInfo.hasTime) return (bInfo.hasTime ? 1 : 0) - (aInfo.hasTime ? 1 : 0);
       return 0;
-      });
-      items.forEach(item => list.appendChild(item));
+    });
+    items.forEach(item => list.appendChild(item));
+    let upcomingCount = 0;
+    for (const item of items) {
+      const info = getNodeTimeInfo(item);
+      const isUpcoming = info.hasTime && info.time !== null && info.time >= todayMs;
+      if (isUpcoming) {
+        upcomingCount += 1;
+      } else {
+        break;
+      }
+    }
+    if (upcomingCount > 0 && upcomingCount < items.length) {
+      const divider = existingDivider || buildNewsDivider();
+      list.insertBefore(divider, items[upcomingCount] || null);
+    }
     }
     function getNodeTimeInfo(node) {
+    if (!node || node.classList?.contains('news-list-divider')) return { hasTime: false, time: null };
+    const dataTime = node.dataset?.eventTime;
+    if (dataTime !== undefined) {
+      const parsed = Number(dataTime);
+      if (Number.isFinite(parsed)) return { hasTime: true, time: parsed };
+    }
       const timeEl = node.querySelector('time');
       const datetime = timeEl?.getAttribute('datetime') || '';
       const time = parseDateValue(datetime);
       return { hasTime: time !== null, time };
     }
+  function buildNewsDivider() {
+    const divider = document.createElement('li');
+    divider.className = 'news-list-divider';
+    divider.setAttribute('role', 'separator');
+    divider.innerHTML = `<span aria-hidden="true"></span><span class="news-divider-label">Past events</span><span aria-hidden="true"></span>`;
+    return divider;
+  }
   
   /* ====== Initial Rendering ====== */
   await Promise.all([
