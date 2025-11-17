@@ -259,16 +259,37 @@ import { getStorage, ref as storageRef, uploadBytes, uploadBytesResumable, getDo
   // Client-side image compression (iPad/desktop-friendly)
   async function compressImageIfNeeded(file) {
     try {
-      if (!file || !file.type?.startsWith('image/')) return file;
-      const converted = await convertHeicFile(file);
-      if (converted !== file) return converted;
-      if (/image\/(heic|heif)/i.test(file.type || '') || HEIC_EXT_RE.test(file.name || '')) return file;
+      if (!file) return file;
+      const name = file.name || '';
+      const type = file.type || '';
+      const hasImageMime = type.startsWith('image/');
+      const hasHeicExt = HEIC_EXT_RE.test(name);
+      const looksHeicMime = /image\/(heic|heif)/i.test(type);
+      const treatAsImage = hasImageMime || hasHeicExt;
+      console.info('[image] inspect file', { name, type, size: file.size, hasImageMime, hasHeicExt, looksHeicMime });
+      if (!treatAsImage) return file;
+
+      let working = file;
+      if (looksHeicMime || hasHeicExt) {
+        const converted = await convertHeicFile(file);
+        if (converted !== file) return converted;
+        working = converted;
+        if (/image\/(heic|heif)/i.test(working.type || '') || HEIC_EXT_RE.test(working.name || '')) {
+          return working;
+        }
+      }
+
+      if (!(working.type || '').startsWith('image/')) {
+        console.warn('[image] skipping compression, no image mime after conversion', { name: working.name, type: working.type });
+        return working;
+      }
+
       // Read into image
       const dataUrl = await new Promise((res, rej) => {
         const r = new FileReader();
         r.onload = () => res(r.result);
         r.onerror = rej;
-        r.readAsDataURL(file);
+        r.readAsDataURL(working);
       });
       const img = new Image();
       const loadP = new Promise((res, rej) => { img.onload = res; img.onerror = rej; });
@@ -283,16 +304,17 @@ import { getStorage, ref as storageRef, uploadBytes, uploadBytesResumable, getDo
       canvas.width = targetW;
       canvas.height = targetH;
       const ctx = canvas.getContext('2d');
-      if (!ctx) return file;
+      if (!ctx) return working;
       ctx.drawImage(img, 0, 0, targetW, targetH);
       const quality = 0.82;
       const blob = await new Promise(res => canvas.toBlob(res, 'image/jpeg', quality));
-      if (!blob) return file;
+      if (!blob) return working;
       // If compression didn’t help, keep original
-      if (blob.size >= file.size) return file;
-      return new File([blob], (file.name || 'image')
+      if (blob.size >= working.size) return working;
+      return new File([blob], (working.name || 'image')
         .replace(/\.(heic|heif|png|webp|jpg|jpeg)$/i, '') + '.jpg', { type: 'image/jpeg' });
-    } catch {
+    } catch (err) {
+      console.error('[image] compression failed, returning original', err);
       return file; // fall back safely
     }
   }
@@ -301,9 +323,9 @@ import { getStorage, ref as storageRef, uploadBytes, uploadBytesResumable, getDo
     if (!file) return { mediaURL: '', mediaType: '' };
     // Prepare file: compress images; enforce size/type limits
     let prepared = file;
-    if (file.type?.startsWith('image/')) {
-      const originalMeta = { name: file.name, type: file.type, size: file.size };
-      prepared = await compressImageIfNeeded(file);
+    const originalMeta = file ? { name: file.name, type: file.type, size: file.size } : null;
+    prepared = await compressImageIfNeeded(file);
+    if (originalMeta) {
       if (prepared !== file) {
         console.info('[upload] image prepared', {
           original: originalMeta,
