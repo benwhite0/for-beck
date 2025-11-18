@@ -156,8 +156,15 @@ import { getStorage, ref as storageRef, uploadBytes, uploadBytesResumable, getDo
     order: 'random',
     lastApplied: '',
     list: [],
+    filteredList: [],
     feedEl: null,
-    buttons: []
+    buttons: [],
+    query: '',
+    rawQuery: '',
+    searchInput: null,
+    searchStatus: null,
+    emptyEl: null,
+    emptyDefault: ''
   };
 
   function shuffleArray(list){
@@ -236,21 +243,137 @@ import { getStorage, ref as storageRef, uploadBytes, uploadBytesResumable, getDo
     });
   }
 
+  function updateMemoriesEmptyState(renderedLength){
+    const emptyEl = memoriesState.emptyEl;
+    if (!emptyEl) return;
+    const hasItems = memoriesState.list.length > 0;
+    const hasQuery = !!memoriesState.query;
+    if (!hasItems) {
+      emptyEl.textContent = memoriesState.emptyDefault || emptyEl.textContent;
+      emptyEl.style.display = 'block';
+      return;
+    }
+    if (hasQuery && renderedLength === 0) {
+      emptyEl.textContent = 'No memories match your search yet.';
+      emptyEl.style.display = 'block';
+      return;
+    }
+    emptyEl.textContent = memoriesState.emptyDefault || emptyEl.textContent;
+    emptyEl.style.display = 'none';
+  }
+
+  function updateMemoriesSearchStatus(){
+    const statusEl = memoriesState.searchStatus;
+    if (!statusEl) return;
+    const total = memoriesState.list.length;
+    if (!total) {
+      statusEl.textContent = '';
+      return;
+    }
+    const query = memoriesState.rawQuery.trim();
+    const count = memoriesState.filteredList.length;
+    if (!query) {
+      statusEl.textContent = `Showing ${count} memories.`;
+      return;
+    }
+    const formattedQuery = query.replace(/\s+/g, ' ').trim();
+    const label = formattedQuery ? `“${formattedQuery}”` : 'your search';
+    statusEl.textContent = count
+      ? `Showing ${count} of ${total} memories for ${label}.`
+      : `No memories match ${label}.`;
+  }
+
+  function getMemoriesSearchText(item){
+    if (!item || typeof item !== 'object') return '';
+    if (item._memSearchText) return item._memSearchText;
+    const parts = [];
+    const title = item.title && String(item.title).trim();
+    if (title) parts.push(title);
+    const content = item.content && String(item.content);
+    if (content) parts.push(content);
+    const author = item.author && String(item.author);
+    if (author) parts.push(author);
+    const credits = item.credits && String(item.credits);
+    if (credits) parts.push(credits);
+    const eventDate = item.eventDate;
+    if (eventDate) parts.push(String(eventDate));
+    const eventInfo = getEventDateInfo(eventDate);
+    if (eventInfo) {
+      if (eventInfo.display) parts.push(eventInfo.display);
+      if (eventInfo.datetime) parts.push(eventInfo.datetime);
+    }
+    const postedTime = parseDateValue(item.postedAt);
+    if (postedTime !== null) {
+      parts.push(new Date(postedTime).toISOString());
+    }
+    const text = parts.join(' ').toLowerCase();
+    Object.defineProperty(item, '_memSearchText', {
+      value: text,
+      configurable: true,
+      enumerable: false,
+      writable: false
+    });
+    return text;
+  }
+
+  function filterMemoriesList(list, terms){
+    if (!Array.isArray(list)) return [];
+    if (!terms?.length) return list.slice();
+    return list.filter(item => {
+      const haystack = getMemoriesSearchText(item);
+      if (!haystack) return false;
+      return terms.every(term => haystack.includes(term));
+    });
+  }
+
+  function buildMemoriesSearchTerms(normalized){
+    if (!normalized) return [];
+    const tokens = normalized.split(/[\s,./\\_-]+/).filter(Boolean);
+    return tokens.length ? tokens : [];
+  }
+
+  function setMemoriesSearchQuery(rawQuery){
+    const raw = typeof rawQuery === 'string' ? rawQuery : '';
+    memoriesState.rawQuery = raw;
+    const normalized = raw.trim().toLowerCase();
+    memoriesState.query = normalized;
+    if (!memoriesState.list.length) {
+      memoriesState.filteredList = memoriesState.list.slice();
+      applyMemoriesSort(memoriesState.order, { force: true });
+      return;
+    }
+    const terms = buildMemoriesSearchTerms(normalized);
+    memoriesState.filteredList = filterMemoriesList(memoriesState.list, terms);
+    applyMemoriesSort(memoriesState.order, { force: true });
+  }
+
   function applyMemoriesSort(order, { force = false } = {}){
     if (order) memoriesState.order = order;
     const targetOrder = memoriesState.order || 'random';
-    if (!memoriesState.feedEl || !memoriesState.list.length) {
+    if (!memoriesState.feedEl) {
+      updateMemoriesSortButtonsState(targetOrder, memoriesState.list.length === 0);
+      return;
+    }
+    if (!memoriesState.list.length) {
+      memoriesState.feedEl.innerHTML = '';
+      memoriesState.feedEl.setAttribute('aria-busy', 'false');
       updateMemoriesSortButtonsState(targetOrder, true);
+      updateMemoriesEmptyState(0);
+      updateMemoriesSearchStatus();
       return;
     }
-    if (!force && targetOrder !== 'random' && memoriesState.lastApplied === targetOrder) {
+    if (!force && targetOrder !== 'random' && memoriesState.lastApplied === targetOrder && !memoriesState.query) {
       updateMemoriesSortButtonsState(targetOrder, false);
+      updateMemoriesEmptyState(memoriesState.filteredList.length);
+      updateMemoriesSearchStatus();
       return;
     }
-    const arranged = getMemoriesOrderedList(memoriesState.list, targetOrder);
+    const arranged = getMemoriesOrderedList(memoriesState.filteredList, targetOrder);
     renderFeedListToElement(memoriesState.feedEl, arranged, 'memories');
     memoriesState.lastApplied = targetOrder;
     updateMemoriesSortButtonsState(targetOrder, false);
+    updateMemoriesEmptyState(arranged.length);
+    updateMemoriesSearchStatus();
   }
 
   const memoriesSortButtons = $$('[data-memories-sort]');
@@ -262,6 +385,25 @@ import { getStorage, ref as storageRef, uploadBytes, uploadBytesResumable, getDo
         const nextOrder = btn.getAttribute('data-memories-sort') || 'random';
         applyMemoriesSort(nextOrder);
       });
+    });
+  }
+
+  const memoriesSearchForm = $('#memories-search');
+  if (memoriesSearchForm) {
+    const searchInput = $('#memories-search-input', memoriesSearchForm);
+    const statusEl = $('#memories-search-status');
+    memoriesState.searchInput = searchInput || null;
+    memoriesState.searchStatus = statusEl || null;
+    memoriesSearchForm.addEventListener('submit', e => e.preventDefault());
+    if (searchInput) {
+      const handleSearchInput = debounce(() => {
+        setMemoriesSearchQuery(searchInput.value);
+      }, 160);
+      searchInput.addEventListener('input', handleSearchInput);
+    }
+    memoriesSearchForm.addEventListener('reset', () => {
+      setMemoriesSearchQuery('');
+      requestAnimationFrame(() => memoriesState.searchInput?.focus());
     });
   }
 
@@ -525,25 +667,41 @@ import { getStorage, ref as storageRef, uploadBytes, uploadBytesResumable, getDo
     feedEl.setAttribute('aria-busy', 'true');
     const list = await fetchSectionPosts(section);
       const emptyMsg = document.querySelector(`[data-empty-for="${section}"]`);
+      if (section === 'memories') {
+        memoriesState.feedEl = feedEl;
+        if (emptyMsg) {
+          memoriesState.emptyEl = emptyMsg;
+          if (!memoriesState.emptyDefault) {
+            memoriesState.emptyDefault = emptyMsg.textContent || '';
+          }
+        }
+      }
       if (!list.length) {
         if (emptyMsg) emptyMsg.style.display = 'block';
         feedEl.innerHTML = '';
-      feedEl.setAttribute('aria-busy', 'false');
-      if (section === 'memories') {
-        memoriesState.list = [];
-        memoriesState.feedEl = feedEl;
-        memoriesState.lastApplied = '';
-        updateMemoriesSortButtonsState(memoriesState.order, true);
-      }
+        feedEl.setAttribute('aria-busy', 'false');
+        if (section === 'memories') {
+          memoriesState.list = [];
+          memoriesState.filteredList = [];
+          memoriesState.lastApplied = '';
+          updateMemoriesSortButtonsState(memoriesState.order, true);
+          updateMemoriesEmptyState(0);
+          updateMemoriesSearchStatus();
+          if (memoriesState.searchInput && memoriesState.searchInput.value !== memoriesState.rawQuery) {
+            memoriesState.searchInput.value = memoriesState.rawQuery;
+          }
+        }
         return;
       }
       if (emptyMsg) emptyMsg.style.display = 'none';
 
     if (section === 'memories') {
       memoriesState.list = list.slice();
-      memoriesState.feedEl = feedEl;
       memoriesState.lastApplied = '';
-      applyMemoriesSort(memoriesState.order, { force: true });
+      if (memoriesState.searchInput && memoriesState.searchInput.value !== memoriesState.rawQuery) {
+        memoriesState.searchInput.value = memoriesState.rawQuery;
+      }
+      setMemoriesSearchQuery(memoriesState.rawQuery);
       return;
     }
 

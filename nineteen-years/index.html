@@ -53,6 +53,14 @@
             <button class="view-toggle-btn" type="button" data-memories-sort="desc" aria-pressed="false">19 to Born</button>
           </div>
         </div>
+        <form class="memories-search" id="memories-search" role="search">
+          <label for="memories-search-input">Search 19 Years</label>
+          <div class="memories-search-row">
+            <input type="search" id="memories-search-input" name="q" placeholder="Search by date, title, or description" autocomplete="off" />
+            <button class="btn btn-ghost" type="reset" data-search-clear>Clear</button>
+          </div>
+        </form>
+        <p class="muted small" id="memories-search-status" aria-live="polite"></p>
         <!-- Feed -->
         <ul class="card-grid card-grid-memories" id="feed-memories" aria-live="polite" aria-busy="false"></ul>
         <p class="muted empty-state" data-empty-for="memories">No memories yet. Be the first to share.</p>
