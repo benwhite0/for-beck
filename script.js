@@ -152,6 +152,15 @@ import { getStorage, ref as storageRef, uploadBytes, uploadBytesResumable, getDo
     }
   }
 
+  const globalSearchState = {
+    query: '',
+    allPosts: [],
+    memoriesList: [],
+    silverList: [],
+    actionsList: [],
+    newsList: []
+  };
+
   const memoriesState = {
     order: 'random',
     lastApplied: '',
@@ -159,10 +168,6 @@ import { getStorage, ref as storageRef, uploadBytes, uploadBytesResumable, getDo
     filteredList: [],
     feedEl: null,
     buttons: [],
-    query: '',
-    rawQuery: '',
-    searchInput: null,
-    searchStatus: null,
     emptyEl: null,
     emptyDefault: ''
   };
@@ -247,40 +252,19 @@ import { getStorage, ref as storageRef, uploadBytes, uploadBytesResumable, getDo
     const emptyEl = memoriesState.emptyEl;
     if (!emptyEl) return;
     const hasItems = memoriesState.list.length > 0;
-    const hasQuery = !!memoriesState.query;
+    const hasQuery = !!globalSearchState.query;
     if (!hasItems) {
       emptyEl.textContent = memoriesState.emptyDefault || emptyEl.textContent;
       emptyEl.style.display = 'block';
       return;
     }
     if (hasQuery && renderedLength === 0) {
-      emptyEl.textContent = 'No memories match your search yet.';
+      emptyEl.textContent = 'No memories match your search.';
       emptyEl.style.display = 'block';
       return;
     }
     emptyEl.textContent = memoriesState.emptyDefault || emptyEl.textContent;
     emptyEl.style.display = 'none';
-  }
-
-  function updateMemoriesSearchStatus(){
-    const statusEl = memoriesState.searchStatus;
-    if (!statusEl) return;
-    const total = memoriesState.list.length;
-    if (!total) {
-      statusEl.textContent = '';
-      return;
-    }
-    const query = memoriesState.rawQuery.trim();
-    const count = memoriesState.filteredList.length;
-    if (!query) {
-      statusEl.textContent = `Showing ${count} memories.`;
-      return;
-    }
-    const formattedQuery = query.replace(/\s+/g, ' ').trim();
-    const label = formattedQuery ? `“${formattedQuery}”` : 'your search';
-    statusEl.textContent = count
-      ? `Showing ${count} of ${total} memories for ${label}.`
-      : `No memories match ${label}.`;
   }
 
   function getMemoriesSearchText(item){
@@ -332,19 +316,22 @@ import { getStorage, ref as storageRef, uploadBytes, uploadBytesResumable, getDo
     return tokens.length ? tokens : [];
   }
 
-  function setMemoriesSearchQuery(rawQuery){
-    const raw = typeof rawQuery === 'string' ? rawQuery : '';
-    memoriesState.rawQuery = raw;
-    const normalized = raw.trim().toLowerCase();
-    memoriesState.query = normalized;
-    if (!memoriesState.list.length) {
-      memoriesState.filteredList = memoriesState.list.slice();
-      applyMemoriesSort(memoriesState.order, { force: true });
-      return;
-    }
+  function applyGlobalSearch(rawQuery){
+    const normalized = (typeof rawQuery === 'string' ? rawQuery : '').trim().toLowerCase();
+    globalSearchState.query = normalized;
     const terms = buildMemoriesSearchTerms(normalized);
     memoriesState.filteredList = filterMemoriesList(memoriesState.list, terms);
     applyMemoriesSort(memoriesState.order, { force: true });
+    const silverFeedEl = $('#feed-silver');
+    if (silverFeedEl) {
+      const filtered = filterMemoriesList(globalSearchState.silverList, terms);
+      renderFeedListToElement(silverFeedEl, filtered.slice().sort(compareSubmissionsByEventDate), 'silver');
+    }
+    const actionsFeedEl = $('#feed-actions');
+    if (actionsFeedEl) {
+      const filtered = filterMemoriesList(globalSearchState.actionsList, terms);
+      renderFeedListToElement(actionsFeedEl, filtered.slice().sort(compareSubmissionsByEventDate), 'actions');
+    }
   }
 
   function applyMemoriesSort(order, { force = false } = {}){
@@ -362,10 +349,9 @@ import { getStorage, ref as storageRef, uploadBytes, uploadBytesResumable, getDo
       updateMemoriesSearchStatus();
       return;
     }
-    if (!force && targetOrder !== 'random' && memoriesState.lastApplied === targetOrder && !memoriesState.query) {
+    if (!force && targetOrder !== 'random' && memoriesState.lastApplied === targetOrder && !globalSearchState.query) {
       updateMemoriesSortButtonsState(targetOrder, false);
       updateMemoriesEmptyState(memoriesState.filteredList.length);
-      updateMemoriesSearchStatus();
       return;
     }
     const arranged = getMemoriesOrderedList(memoriesState.filteredList, targetOrder);
@@ -373,7 +359,6 @@ import { getStorage, ref as storageRef, uploadBytes, uploadBytesResumable, getDo
     memoriesState.lastApplied = targetOrder;
     updateMemoriesSortButtonsState(targetOrder, false);
     updateMemoriesEmptyState(arranged.length);
-    updateMemoriesSearchStatus();
   }
 
   const memoriesSortButtons = $$('[data-memories-sort]');
@@ -388,23 +373,159 @@ import { getStorage, ref as storageRef, uploadBytes, uploadBytesResumable, getDo
     });
   }
 
-  const memoriesSearchForm = $('#memories-search');
-  if (memoriesSearchForm) {
-    const searchInput = $('#memories-search-input', memoriesSearchForm);
-    const statusEl = $('#memories-search-status');
-    memoriesState.searchInput = searchInput || null;
-    memoriesState.searchStatus = statusEl || null;
-    memoriesSearchForm.addEventListener('submit', e => e.preventDefault());
-    if (searchInput) {
-      const handleSearchInput = debounce(() => {
-        setMemoriesSearchQuery(searchInput.value);
-      }, 160);
-      searchInput.addEventListener('input', handleSearchInput);
+  const globalSearchInput = $('#global-search-input');
+  if (globalSearchInput) {
+    const globalSearchForm = $('#global-search');
+    const isSearchPage = location.pathname.includes('/search/');
+    
+    if (!isSearchPage) {
+      // On other pages, redirect to search page on submit or Enter
+      if (globalSearchForm) {
+        globalSearchForm.addEventListener('submit', e => {
+          e.preventDefault();
+          const query = globalSearchInput.value.trim();
+          if (query) {
+            const url = new URL('../search/', document.baseURI);
+            url.searchParams.set('q', query);
+            location.href = url.pathname + url.search;
+          }
+        });
+      }
+      
+      globalSearchInput.addEventListener('keydown', e => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          const query = globalSearchInput.value.trim();
+          if (query) {
+            const url = new URL('../search/', document.baseURI);
+            url.searchParams.set('q', query);
+            location.href = url.pathname + url.search;
+          }
+        }
+      });
+    } else {
+      // On search page, perform live search
+      if (globalSearchForm) {
+        globalSearchForm.addEventListener('submit', e => e.preventDefault());
+      }
+      
+      const handleSearchPageInput = debounce(async () => {
+        const query = globalSearchInput.value.trim();
+        await performGlobalSearch(query);
+      }, 300);
+      
+      globalSearchInput.addEventListener('input', handleSearchPageInput);
+      
+      // Load from URL parameter on page load
+      const urlParams = new URLSearchParams(location.search);
+      const initialQuery = urlParams.get('q') || '';
+      if (initialQuery) {
+        globalSearchInput.value = initialQuery;
+        performGlobalSearch(initialQuery);
+      }
     }
-    memoriesSearchForm.addEventListener('reset', () => {
-      setMemoriesSearchQuery('');
-      requestAnimationFrame(() => memoriesState.searchInput?.focus());
-    });
+  }
+
+  // Search results page logic
+  async function performGlobalSearch(rawQuery){
+    const summaryEl = $('#search-summary');
+    const emptyEl = $('#search-empty');
+    if (!summaryEl) return; // Not on search page
+    
+    const normalized = rawQuery.trim().toLowerCase();
+    
+    if (!normalized) {
+      summaryEl.textContent = 'Enter a search term above';
+      if (emptyEl) emptyEl.hidden = true;
+      ['memories', 'silver', 'actions', 'news'].forEach(section => {
+        const sectionEl = $(`#search-section-${section}`);
+        if (sectionEl) sectionEl.hidden = true;
+      });
+      return;
+    }
+    
+    summaryEl.textContent = 'Searching...';
+    
+    // Fetch all sections in parallel
+    const [memoriesList, silverList, actionsList, newsList] = await Promise.all([
+      fetchSectionPosts('memories'),
+      fetchSectionPosts('silver'),
+      fetchSectionPosts('actions'),
+      fetchSectionPosts('news')
+    ]);
+    
+    const terms = buildMemoriesSearchTerms(normalized);
+    
+    // Filter each section
+    const memoriesFiltered = filterMemoriesList(memoriesList, terms);
+    const silverFiltered = filterMemoriesList(silverList, terms);
+    const actionsFiltered = filterMemoriesList(actionsList, terms);
+    const newsFiltered = filterMemoriesList(newsList, terms);
+    
+    const totalResults = memoriesFiltered.length + silverFiltered.length + 
+                         actionsFiltered.length + newsFiltered.length;
+    
+    // Update summary
+    if (totalResults === 0) {
+      summaryEl.textContent = `No results found for "${rawQuery}"`;
+      if (emptyEl) emptyEl.hidden = false;
+    } else {
+      summaryEl.textContent = `Found ${totalResults} result${totalResults === 1 ? '' : 's'} for "${rawQuery}"`;
+      if (emptyEl) emptyEl.hidden = true;
+    }
+    
+    // Render each section
+    renderSearchSection('memories', memoriesFiltered);
+    renderSearchSection('silver', silverFiltered);
+    renderSearchSection('actions', actionsFiltered);
+    renderSearchSection('news', newsFiltered);
+  }
+
+  function renderSearchSection(section, results){
+    const sectionEl = $(`#search-section-${section}`);
+    const feedEl = $(`#search-feed-${section}`);
+    const countEl = $(`[data-count-for="${section}"]`);
+    
+    if (!sectionEl || !feedEl) return;
+    
+    if (results.length === 0) {
+      sectionEl.hidden = true;
+      return;
+    }
+    
+    sectionEl.hidden = false;
+    if (countEl) {
+      countEl.textContent = `(${results.length})`;
+    }
+    
+    // Render based on section type
+    if (section === 'news') {
+      renderNewsSearchResults(feedEl, results);
+    } else {
+      const sorted = results.slice().sort(compareSubmissionsByEventDate);
+      renderFeedListToElement(feedEl, sorted, section);
+    }
+  }
+
+  function renderNewsSearchResults(listEl, items){
+    if (!listEl) return;
+    const html = items.map(item => {
+      const eventInfo = getEventDateInfo(item.eventDate);
+      const dateHtml = eventInfo
+        ? `<time class="news-date" datetime="${escapeHtml(eventInfo.datetime)}">${escapeHtml(eventInfo.display)}</time>`
+        : '';
+      return `
+        <li>
+          <div class="news-item${eventInfo ? '' : ' news-item--no-date'}">
+            ${dateHtml}
+            <div class="news-body">
+              <h3 class="h3">${escapeHtml(item.title && String(item.title).trim() ? String(item.title).trim() : sanitizeTitle(item.content))}</h3>
+              ${formatNewsContent(item.content)}
+            </div>
+          </div>
+        </li>`;
+    }).join('');
+    listEl.innerHTML = html;
   }
 
   /* ====== Firebase Init ====== */
@@ -686,11 +807,10 @@ import { getStorage, ref as storageRef, uploadBytes, uploadBytesResumable, getDo
           memoriesState.lastApplied = '';
           updateMemoriesSortButtonsState(memoriesState.order, true);
           updateMemoriesEmptyState(0);
-          updateMemoriesSearchStatus();
-          if (memoriesState.searchInput && memoriesState.searchInput.value !== memoriesState.rawQuery) {
-            memoriesState.searchInput.value = memoriesState.rawQuery;
-          }
+          globalSearchState.memoriesList = [];
         }
+        if (section === 'silver') globalSearchState.silverList = [];
+        if (section === 'actions') globalSearchState.actionsList = [];
         return;
       }
       if (emptyMsg) emptyMsg.style.display = 'none';
@@ -698,10 +818,28 @@ import { getStorage, ref as storageRef, uploadBytes, uploadBytesResumable, getDo
     if (section === 'memories') {
       memoriesState.list = list.slice();
       memoriesState.lastApplied = '';
-      if (memoriesState.searchInput && memoriesState.searchInput.value !== memoriesState.rawQuery) {
-        memoriesState.searchInput.value = memoriesState.rawQuery;
-      }
-      setMemoriesSearchQuery(memoriesState.rawQuery);
+      globalSearchState.memoriesList = list.slice();
+      const terms = buildMemoriesSearchTerms(globalSearchState.query);
+      memoriesState.filteredList = filterMemoriesList(list, terms);
+      applyMemoriesSort(memoriesState.order, { force: true });
+      return;
+    }
+
+    if (section === 'silver') {
+      globalSearchState.silverList = list.slice();
+      const terms = buildMemoriesSearchTerms(globalSearchState.query);
+      const filtered = filterMemoriesList(list, terms);
+      const sortedList = filtered.slice().sort(compareSubmissionsByEventDate);
+      renderFeedListToElement(feedEl, sortedList, section);
+      return;
+    }
+
+    if (section === 'actions') {
+      globalSearchState.actionsList = list.slice();
+      const terms = buildMemoriesSearchTerms(globalSearchState.query);
+      const filtered = filterMemoriesList(list, terms);
+      const sortedList = filtered.slice().sort(compareSubmissionsByEventDate);
+      renderFeedListToElement(feedEl, sortedList, section);
       return;
     }
 

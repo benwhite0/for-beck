@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>19 Years — For Beck</title>
+  <title>Search — For Beck</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Playfair+Display:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet" />
@@ -22,7 +22,7 @@
         </button>
         <ul id="nav-menu" class="nav-list">
           <li><a class="nav-link" href="../home/">Home</a></li>
-          <li><a class="nav-link is-active" href="../nineteen-years/">19 Years</a></li>
+          <li><a class="nav-link" href="../nineteen-years/">19 Years</a></li>
           <li><a class="nav-link" href="../support/">Silver Threads</a></li>
           <li><a class="nav-link" href="../safety-plan/">Safety Plan</a></li>
           <li><a class="nav-link" href="../news-events/">News & Events</a></li>
@@ -33,39 +33,53 @@
 
   <main id="content" class="site-main" tabindex="-1">
     <section class="section page-header page-header-compact">
-      <div class="container header-with-cta">
-        <div>
-          <div class="title-with-smile" aria-hidden="true">
-            <h1 class="h1">19 Years</h1>
-            <img class="beck-smile-mark" src="../beck-smile.png" alt="" loading="lazy" />
-          </div>
-          <p>Add your memories, photos, videos, and words from Beck’s life.</p>
-          <p>A reminder of good times without being bombarded with ads on social media platforms.</p>
-          <p>Please check with anyone in the picture that they’re happy for you to post here.</p>
-        </div>
-        <a class="btn" href="../submit/">Submit an entry</a>
+      <div class="container">
+        <h1 class="h1">Search Results</h1>
+        <p class="muted" id="search-summary" aria-live="polite">Enter a search term above</p>
       </div>
     </section>
 
     <section class="section">
       <div class="container">
-        <div class="memories-sort" role="region" aria-label="Sort 19 Years entries">
-          <div class="view-toggle" role="toolbar" aria-label="Sort memories">
-            <button class="view-toggle-btn" type="button" data-memories-sort="random" aria-pressed="false">Random</button>
-            <button class="view-toggle-btn" type="button" data-memories-sort="asc" aria-pressed="false">Born to 19</button>
-            <button class="view-toggle-btn" type="button" data-memories-sort="desc" aria-pressed="false">19 to Born</button>
-          </div>
+        <!-- 19 Years Section -->
+        <div class="search-section" id="search-section-memories" hidden>
+          <h2 class="h2 search-section-title">
+            19 Years
+            <span class="search-count" data-count-for="memories"></span>
+          </h2>
+          <ul class="card-grid card-grid-memories" id="search-feed-memories"></ul>
         </div>
-        <!-- Feed -->
-        <ul class="card-grid card-grid-memories" id="feed-memories" aria-live="polite" aria-busy="false"></ul>
-        <p class="muted empty-state" data-empty-for="memories">No memories yet. Be the first to share.</p>
+
+        <!-- Silver Threads Section -->
+        <div class="search-section" id="search-section-silver" hidden>
+          <h2 class="h2 search-section-title">
+            Silver Threads
+            <span class="search-count" data-count-for="silver"></span>
+          </h2>
+          <ul class="card-grid card-grid-memories" id="search-feed-silver"></ul>
+        </div>
+
+        <!-- News & Events Gallery Section -->
+        <div class="search-section" id="search-section-actions" hidden>
+          <h2 class="h2 search-section-title">
+            News & Events — Gallery
+            <span class="search-count" data-count-for="actions"></span>
+          </h2>
+          <ul class="card-grid card-grid-memories" id="search-feed-actions"></ul>
+        </div>
+
+        <!-- News & Events List Section -->
+        <div class="search-section" id="search-section-news" hidden>
+          <h2 class="h2 search-section-title">
+            News & Events — List
+            <span class="search-count" data-count-for="news"></span>
+          </h2>
+          <ul class="news-list" id="search-feed-news"></ul>
+        </div>
+
+        <p class="muted empty-state" id="search-empty" hidden>No memories match your search.</p>
       </div>
     </section>
-  <section class="section section-bottom-cta">
-    <div class="container header-with-cta">
-      <a class="btn" href="../submit/">Submit an entry</a>
-    </div>
-  </section>
   </main>
 
   <footer class="site-footer">

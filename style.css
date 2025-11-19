@@ -49,7 +49,7 @@
   }
 
   
-  .header-inner{display:flex; align-items:center; justify-content:space-between; padding:14px 0}
+  .header-inner{display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; padding:14px 0}
   .brand{display:inline-flex; align-items:center; gap:.6rem; text-decoration:none; font-weight:600}
   .brand-mark{font-size:1rem; color:var(--accent)}
   .brand-text{font-family:var(--font-display); font-size:1.15rem; letter-spacing:.2px}
@@ -296,38 +296,30 @@
 .memories-sort{
   margin-bottom:1.5rem;
 }
-.memories-search{
+.global-search{
   display:flex;
-  flex-direction:column;
-  gap:0.5rem;
-  margin-bottom:1.5rem;
+  flex:1 1 auto;
+  max-width:320px;
+  margin:0 1rem;
 }
-.memories-search label{
-  font-weight:600;
-}
-.memories-search-row{
-  display:flex;
-  flex-wrap:wrap;
-  gap:0.75rem;
-}
-.memories-search-row input[type="search"]{
-  flex:1 1 280px;
-  min-width:200px;
-  padding:0.65rem 0.85rem;
+.global-search input[type="search"]{
+  width:100%;
+  padding:0.5rem 0.75rem;
   border-radius:10px;
   border:1px solid var(--border);
   background:#FCFAF7;
+  font-size:0.9rem;
 }
-.memories-search-row .btn{
-  flex:0 0 auto;
+.global-search input[type="search"]:focus{
+  outline:2px solid var(--accent);
+  outline-offset:1px;
 }
-@media (max-width: 600px){
-  .memories-search-row{
-    flex-direction:column;
-    align-items:stretch;
-  }
-  .memories-search-row .btn{
-    width:100%;
+@media (max-width: 900px){
+  .global-search{
+    flex-basis:100%;
+    max-width:none;
+    margin:0.5rem 0 0;
+    order:10;
   }
 }
   .card-meta{display:flex; gap:10px; flex-wrap:wrap; color:var(--muted); font-size:.9rem}
@@ -608,6 +600,35 @@
     }
   }
   
+  /* ========= Search Results Page ========= */
+  .search-section{
+    margin-bottom:3rem;
+  }
+  .search-section[hidden]{
+    display:none;
+  }
+  .search-section-title{
+    display:flex;
+    align-items:baseline;
+    gap:0.75rem;
+    margin-bottom:1.5rem;
+    padding-bottom:0.75rem;
+    border-bottom:2px solid var(--border);
+  }
+  .search-count{
+    font-size:0.9rem;
+    font-weight:400;
+    color:var(--muted);
+    font-family:var(--font-body);
+  }
+  @media (max-width: 720px){
+    .search-section-title{
+      flex-direction:column;
+      gap:0.25rem;
+      align-items:flex-start;
+    }
+  }
+
   /* ========= Footer ========= */
   .site-footer{padding:24px 0; border-top:1px solid var(--border); margin-top:18px}
   
