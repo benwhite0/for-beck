@@ -8,6 +8,13 @@ export function createSearchModule({
   sanitizeTitle,
   formatNewsContent,
   fetchSectionPosts,
+  fetchNewsEventsPosts = async () => {
+    const [actions, news] = await Promise.all([
+      fetchSectionPosts('actions'),
+      fetchSectionPosts('news')
+    ]);
+    return [...actions, ...news];
+  },
   debounce,
   memoriesState,
   applyMemoriesSort
@@ -126,25 +133,24 @@ export function createSearchModule({
 
     summaryEl.textContent = 'Searching...';
 
-    const [memoriesList, silverList, actionsList, newsList] = await Promise.all([
+    const [memoriesList, silverList, newsEventsList] = await Promise.all([
       fetchSectionPosts('memories'),
       fetchSectionPosts('silver'),
-      fetchSectionPosts('actions'),
-      fetchSectionPosts('news')
+      fetchNewsEventsPosts()
     ]);
 
     const terms = buildMemoriesSearchTerms(normalized);
 
     const memoriesFiltered = filterMemoriesList(memoriesList, terms);
     const silverFiltered = filterMemoriesList(silverList, terms);
-    const actionsFiltered = filterMemoriesList(actionsList, terms);
-    const newsFiltered = filterMemoriesList(newsList, terms);
+    const newsEventsFiltered = filterMemoriesList(newsEventsList, terms);
+    const actionsFiltered = newsEventsFiltered.slice();
+    const newsFiltered = newsEventsFiltered.slice();
 
     const totalResults =
       memoriesFiltered.length +
       silverFiltered.length +
-      actionsFiltered.length +
-      newsFiltered.length;
+      newsEventsFiltered.length;
 
     if (totalResults === 0) {
       summaryEl.textContent = `No results found for "${rawQuery}"`;
@@ -187,7 +193,8 @@ export function createSearchModule({
 
   function renderNewsSearchResults(listEl, items) {
     if (!listEl) return;
-    const html = items
+    const sorted = items.slice().sort(compareSubmissionsByEventDate);
+    const html = sorted
       .map(item => {
         const eventInfo = typeof getEventDateInfo === 'function' ? getEventDateInfo(item.eventDate) : null;
         const dateHtml = eventInfo

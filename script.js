@@ -166,6 +166,49 @@ import { createSearchModule } from './search.js';
     emptyDefault: ''
   };
 
+  const NEWS_EVENTS_SECTIONS = ['actions', 'news'];
+  let newsEventsCache = null;
+  let newsEventsCachePromise = null;
+
+  async function fetchNewsEventsPosts({ force = false } = {}) {
+    if (force) {
+      newsEventsCache = null;
+      newsEventsCachePromise = null;
+    }
+    if (!force && newsEventsCache) {
+      return newsEventsCache.slice();
+    }
+    if (!force && newsEventsCachePromise) {
+      const pending = await newsEventsCachePromise;
+      return pending.slice();
+    }
+    newsEventsCachePromise = (async () => {
+      const lists = await Promise.all(
+        NEWS_EVENTS_SECTIONS.map(section =>
+          fetchSectionPosts(section).catch(() => [])
+        )
+      );
+      const seen = new Set();
+      const combined = [];
+      lists.forEach(entries => {
+        entries.forEach(item => {
+          if (!item || !item.id) return;
+          if (seen.has(item.id)) return;
+          seen.add(item.id);
+          combined.push(item);
+        });
+      });
+      return combined;
+    })();
+    try {
+      const fresh = await newsEventsCachePromise;
+      newsEventsCache = fresh;
+      return fresh.slice();
+    } finally {
+      newsEventsCachePromise = null;
+    }
+  }
+
   function shuffleArray(list){
     const arr = list.slice();
     for (let i = arr.length - 1; i > 0; i -= 1) {
@@ -229,6 +272,7 @@ import { createSearchModule } from './search.js';
     sanitizeTitle,
     formatNewsContent,
     fetchSectionPosts,
+    fetchNewsEventsPosts,
     debounce,
     memoriesState,
     applyMemoriesSort
@@ -584,7 +628,9 @@ import { createSearchModule } from './search.js';
   async function renderFeed(section, feedEl) {
       if (!feedEl) return;
     feedEl.setAttribute('aria-busy', 'true');
-    const list = await fetchSectionPosts(section);
+    const list = section === 'actions'
+      ? await fetchNewsEventsPosts()
+      : await fetchSectionPosts(section);
       const emptyMsg = document.querySelector(`[data-empty-for="${section}"]`);
       if (section === 'memories') {
         memoriesState.feedEl = feedEl;
@@ -655,7 +701,7 @@ import { createSearchModule } from './search.js';
   async function renderNewsList() {
     const listEl = document.getElementById('news-list');
     if (!listEl) return;
-    const posts = await fetchSectionPosts('news');
+    const posts = await fetchNewsEventsPosts();
     listEl.querySelectorAll('.js-news-dynamic, .news-list-divider').forEach(node => node.remove());
     if (!posts.length) return;
     const sortedPosts = posts.slice().sort(compareSubmissionsByEventDate);
@@ -685,6 +731,10 @@ import { createSearchModule } from './search.js';
       fragment.appendChild(li);
     });
     listEl.appendChild(fragment);
+    const searchState = searchModule?.state;
+    if (searchState) {
+      searchState.newsList = posts.slice();
+    }
   }
 
     /* ====== Entry Page Rendering ====== */
