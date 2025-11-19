@@ -6,6 +6,7 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.0.0/firebas
 import { getAuth, onAuthStateChanged, signInAnonymously, signOut, GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js';
 import { getFirestore, collection, addDoc, getDoc, getDocs, doc, query, where, orderBy, limit, updateDoc, deleteDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js';
 import { getStorage, ref as storageRef, uploadBytes, uploadBytesResumable, getDownloadURL } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-storage.js';
+import { createSearchModule } from './search.js';
 
 (async function(){
     const $ = (sel, root = document) => root.querySelector(sel);
@@ -152,14 +153,7 @@ import { getStorage, ref as storageRef, uploadBytes, uploadBytesResumable, getDo
     }
   }
 
-  const globalSearchState = {
-    query: '',
-    allPosts: [],
-    memoriesList: [],
-    silverList: [],
-    actionsList: [],
-    newsList: []
-  };
+  let searchModule;
 
   const memoriesState = {
     order: 'random',
@@ -225,6 +219,21 @@ import { getStorage, ref as storageRef, uploadBytes, uploadBytesResumable, getDo
     }
   }
 
+  searchModule = createSearchModule({
+    $,
+    renderFeedListToElement,
+    compareSubmissionsByEventDate,
+    getEventDateInfo,
+    parseDateValue,
+    escapeHtml,
+    sanitizeTitle,
+    formatNewsContent,
+    fetchSectionPosts,
+    debounce,
+    memoriesState,
+    applyMemoriesSort
+  });
+
   function getMemoriesOrderedList(list, order){
     const arr = list.slice();
     switch (order) {
@@ -252,7 +261,7 @@ import { getStorage, ref as storageRef, uploadBytes, uploadBytesResumable, getDo
     const emptyEl = memoriesState.emptyEl;
     if (!emptyEl) return;
     const hasItems = memoriesState.list.length > 0;
-    const hasQuery = !!globalSearchState.query;
+    const hasQuery = !!(searchModule && searchModule.state.query);
     if (!hasItems) {
       emptyEl.textContent = memoriesState.emptyDefault || emptyEl.textContent;
       emptyEl.style.display = 'block';
@@ -265,73 +274,6 @@ import { getStorage, ref as storageRef, uploadBytes, uploadBytesResumable, getDo
     }
     emptyEl.textContent = memoriesState.emptyDefault || emptyEl.textContent;
     emptyEl.style.display = 'none';
-  }
-
-  function getMemoriesSearchText(item){
-    if (!item || typeof item !== 'object') return '';
-    if (item._memSearchText) return item._memSearchText;
-    const parts = [];
-    const title = item.title && String(item.title).trim();
-    if (title) parts.push(title);
-    const content = item.content && String(item.content);
-    if (content) parts.push(content);
-    const author = item.author && String(item.author);
-    if (author) parts.push(author);
-    const credits = item.credits && String(item.credits);
-    if (credits) parts.push(credits);
-    const eventDate = item.eventDate;
-    if (eventDate) parts.push(String(eventDate));
-    const eventInfo = getEventDateInfo(eventDate);
-    if (eventInfo) {
-      if (eventInfo.display) parts.push(eventInfo.display);
-      if (eventInfo.datetime) parts.push(eventInfo.datetime);
-    }
-    const postedTime = parseDateValue(item.postedAt);
-    if (postedTime !== null) {
-      parts.push(new Date(postedTime).toISOString());
-    }
-    const text = parts.join(' ').toLowerCase();
-    Object.defineProperty(item, '_memSearchText', {
-      value: text,
-      configurable: true,
-      enumerable: false,
-      writable: false
-    });
-    return text;
-  }
-
-  function filterMemoriesList(list, terms){
-    if (!Array.isArray(list)) return [];
-    if (!terms?.length) return list.slice();
-    return list.filter(item => {
-      const haystack = getMemoriesSearchText(item);
-      if (!haystack) return false;
-      return terms.every(term => haystack.includes(term));
-    });
-  }
-
-  function buildMemoriesSearchTerms(normalized){
-    if (!normalized) return [];
-    const tokens = normalized.split(/[\s,./\\_-]+/).filter(Boolean);
-    return tokens.length ? tokens : [];
-  }
-
-  function applyGlobalSearch(rawQuery){
-    const normalized = (typeof rawQuery === 'string' ? rawQuery : '').trim().toLowerCase();
-    globalSearchState.query = normalized;
-    const terms = buildMemoriesSearchTerms(normalized);
-    memoriesState.filteredList = filterMemoriesList(memoriesState.list, terms);
-    applyMemoriesSort(memoriesState.order, { force: true });
-    const silverFeedEl = $('#feed-silver');
-    if (silverFeedEl) {
-      const filtered = filterMemoriesList(globalSearchState.silverList, terms);
-      renderFeedListToElement(silverFeedEl, filtered.slice().sort(compareSubmissionsByEventDate), 'silver');
-    }
-    const actionsFeedEl = $('#feed-actions');
-    if (actionsFeedEl) {
-      const filtered = filterMemoriesList(globalSearchState.actionsList, terms);
-      renderFeedListToElement(actionsFeedEl, filtered.slice().sort(compareSubmissionsByEventDate), 'actions');
-    }
   }
 
   function applyMemoriesSort(order, { force = false } = {}){
@@ -348,7 +290,8 @@ import { getStorage, ref as storageRef, uploadBytes, uploadBytesResumable, getDo
       updateMemoriesEmptyState(0);
       return;
     }
-    if (!force && targetOrder !== 'random' && memoriesState.lastApplied === targetOrder && !globalSearchState.query) {
+    const hasQuery = !!(searchModule && searchModule.state.query);
+    if (!force && targetOrder !== 'random' && memoriesState.lastApplied === targetOrder && !hasQuery) {
       updateMemoriesSortButtonsState(targetOrder, false);
       updateMemoriesEmptyState(memoriesState.filteredList.length);
       return;
@@ -372,107 +315,6 @@ import { getStorage, ref as storageRef, uploadBytes, uploadBytesResumable, getDo
     });
   }
 
-  // Search results page logic
-  async function performGlobalSearch(rawQuery){
-    const summaryEl = $('#search-summary');
-    const emptyEl = $('#search-empty');
-    if (!summaryEl) return; // Not on search page
-    
-    const normalized = rawQuery.trim().toLowerCase();
-    
-    if (!normalized) {
-      summaryEl.textContent = 'Enter a search term above';
-      if (emptyEl) emptyEl.hidden = true;
-      ['memories', 'silver', 'actions', 'news'].forEach(section => {
-        const sectionEl = $(`#search-section-${section}`);
-        if (sectionEl) sectionEl.hidden = true;
-      });
-      return;
-    }
-    
-    summaryEl.textContent = 'Searching...';
-    
-    // Fetch all sections in parallel
-    const [memoriesList, silverList, actionsList, newsList] = await Promise.all([
-      fetchSectionPosts('memories'),
-      fetchSectionPosts('silver'),
-      fetchSectionPosts('actions'),
-      fetchSectionPosts('news')
-    ]);
-    
-    const terms = buildMemoriesSearchTerms(normalized);
-    
-    // Filter each section
-    const memoriesFiltered = filterMemoriesList(memoriesList, terms);
-    const silverFiltered = filterMemoriesList(silverList, terms);
-    const actionsFiltered = filterMemoriesList(actionsList, terms);
-    const newsFiltered = filterMemoriesList(newsList, terms);
-    
-    const totalResults = memoriesFiltered.length + silverFiltered.length + 
-                         actionsFiltered.length + newsFiltered.length;
-    
-    // Update summary
-    if (totalResults === 0) {
-      summaryEl.textContent = `No results found for "${rawQuery}"`;
-      if (emptyEl) emptyEl.hidden = false;
-    } else {
-      summaryEl.textContent = `Found ${totalResults} result${totalResults === 1 ? '' : 's'} for "${rawQuery}"`;
-      if (emptyEl) emptyEl.hidden = true;
-    }
-    
-    // Render each section
-    renderSearchSection('memories', memoriesFiltered);
-    renderSearchSection('silver', silverFiltered);
-    renderSearchSection('actions', actionsFiltered);
-    renderSearchSection('news', newsFiltered);
-  }
-
-  function renderSearchSection(section, results){
-    const sectionEl = $(`#search-section-${section}`);
-    const feedEl = $(`#search-feed-${section}`);
-    const countEl = $(`[data-count-for="${section}"]`);
-    
-    if (!sectionEl || !feedEl) return;
-    
-    if (results.length === 0) {
-      sectionEl.hidden = true;
-      return;
-    }
-    
-    sectionEl.hidden = false;
-    if (countEl) {
-      countEl.textContent = `(${results.length})`;
-    }
-    
-    // Render based on section type
-    if (section === 'news') {
-      renderNewsSearchResults(feedEl, results);
-    } else {
-      const sorted = results.slice().sort(compareSubmissionsByEventDate);
-      renderFeedListToElement(feedEl, sorted, section);
-    }
-  }
-
-  function renderNewsSearchResults(listEl, items){
-    if (!listEl) return;
-    const html = items.map(item => {
-      const eventInfo = getEventDateInfo(item.eventDate);
-      const dateHtml = eventInfo
-        ? `<time class="news-date" datetime="${escapeHtml(eventInfo.datetime)}">${escapeHtml(eventInfo.display)}</time>`
-        : '';
-      return `
-        <li>
-          <div class="news-item${eventInfo ? '' : ' news-item--no-date'}">
-            ${dateHtml}
-            <div class="news-body">
-              <h3 class="h3">${escapeHtml(item.title && String(item.title).trim() ? String(item.title).trim() : sanitizeTitle(item.content))}</h3>
-              ${formatNewsContent(item.content)}
-            </div>
-          </div>
-        </li>`;
-    }).join('');
-    listEl.innerHTML = html;
-  }
 
   /* ====== Firebase Init ====== */
   const firebaseConfig = {
@@ -492,53 +334,13 @@ import { getStorage, ref as storageRef, uploadBytes, uploadBytesResumable, getDo
   const isAdminUser = (user) => !!(user && !user.isAnonymous && ADMIN_EMAILS.includes(user.email || ''));
 
   const globalSearchInput = $('#global-search-input');
-  if (globalSearchInput) {
+  if (globalSearchInput && searchModule) {
     const globalSearchForm = $('#global-search');
     const isSearchPage = location.pathname.includes('/search/');
-    
-    if (!isSearchPage) {
-      if (globalSearchForm) {
-        globalSearchForm.addEventListener('submit', e => {
-          e.preventDefault();
-          const query = globalSearchInput.value.trim();
-          if (query) {
-            const url = new URL('../search/', document.baseURI);
-            url.searchParams.set('q', query);
-            location.href = url.pathname + url.search;
-          }
-        });
-      }
-      
-      globalSearchInput.addEventListener('keydown', e => {
-        if (e.key === 'Enter') {
-          e.preventDefault();
-          const query = globalSearchInput.value.trim();
-          if (query) {
-            const url = new URL('../search/', document.baseURI);
-            url.searchParams.set('q', query);
-            location.href = url.pathname + url.search;
-          }
-        }
-      });
-    } else {
-      if (globalSearchForm) {
-        globalSearchForm.addEventListener('submit', e => e.preventDefault());
-      }
-      
-      const handleSearchPageInput = debounce(async () => {
-        const query = globalSearchInput.value.trim();
-        await performGlobalSearch(query);
-      }, 300);
-      
-      globalSearchInput.addEventListener('input', handleSearchPageInput);
-      
-      const urlParams = new URLSearchParams(location.search);
-      const initialQuery = urlParams.get('q') || '';
-      if (initialQuery) {
-        globalSearchInput.value = initialQuery;
-        performGlobalSearch(initialQuery);
-      }
-    }
+    searchModule.attachGlobalSearchInput(globalSearchInput, {
+      formEl: globalSearchForm,
+      isSearchPage
+    });
   }
 
   // Do NOT auto sign-in anonymously here to avoid overriding Google sessions.
@@ -793,6 +595,7 @@ import { getStorage, ref as storageRef, uploadBytes, uploadBytesResumable, getDo
           }
         }
       }
+      const searchState = searchModule?.state;
       if (!list.length) {
         if (emptyMsg) emptyMsg.style.display = 'block';
         feedEl.innerHTML = '';
@@ -803,10 +606,10 @@ import { getStorage, ref as storageRef, uploadBytes, uploadBytesResumable, getDo
           memoriesState.lastApplied = '';
           updateMemoriesSortButtonsState(memoriesState.order, true);
           updateMemoriesEmptyState(0);
-          globalSearchState.memoriesList = [];
+          if (searchState) searchState.memoriesList = [];
         }
-        if (section === 'silver') globalSearchState.silverList = [];
-        if (section === 'actions') globalSearchState.actionsList = [];
+        if (section === 'silver' && searchState) searchState.silverList = [];
+        if (section === 'actions' && searchState) searchState.actionsList = [];
         return;
       }
       if (emptyMsg) emptyMsg.style.display = 'none';
@@ -814,26 +617,26 @@ import { getStorage, ref as storageRef, uploadBytes, uploadBytesResumable, getDo
     if (section === 'memories') {
       memoriesState.list = list.slice();
       memoriesState.lastApplied = '';
-      globalSearchState.memoriesList = list.slice();
-      const terms = buildMemoriesSearchTerms(globalSearchState.query);
-      memoriesState.filteredList = filterMemoriesList(list, terms);
+      if (searchState) searchState.memoriesList = list.slice();
+      const terms = searchModule.buildMemoriesSearchTerms(searchState?.query || '');
+      memoriesState.filteredList = searchModule.filterMemoriesList(list, terms);
       applyMemoriesSort(memoriesState.order, { force: true });
       return;
     }
 
     if (section === 'silver') {
-      globalSearchState.silverList = list.slice();
-      const terms = buildMemoriesSearchTerms(globalSearchState.query);
-      const filtered = filterMemoriesList(list, terms);
+      if (searchState) searchState.silverList = list.slice();
+      const terms = searchModule.buildMemoriesSearchTerms(searchState?.query || '');
+      const filtered = searchModule.filterMemoriesList(list, terms);
       const sortedList = filtered.slice().sort(compareSubmissionsByEventDate);
       renderFeedListToElement(feedEl, sortedList, section);
       return;
     }
 
     if (section === 'actions') {
-      globalSearchState.actionsList = list.slice();
-      const terms = buildMemoriesSearchTerms(globalSearchState.query);
-      const filtered = filterMemoriesList(list, terms);
+      if (searchState) searchState.actionsList = list.slice();
+      const terms = searchModule.buildMemoriesSearchTerms(searchState?.query || '');
+      const filtered = searchModule.filterMemoriesList(list, terms);
       const sortedList = filtered.slice().sort(compareSubmissionsByEventDate);
       renderFeedListToElement(feedEl, sortedList, section);
       return;
