@@ -346,7 +346,6 @@ import { getStorage, ref as storageRef, uploadBytes, uploadBytesResumable, getDo
       memoriesState.feedEl.setAttribute('aria-busy', 'false');
       updateMemoriesSortButtonsState(targetOrder, true);
       updateMemoriesEmptyState(0);
-      updateMemoriesSearchStatus();
       return;
     }
     if (!force && targetOrder !== 'random' && memoriesState.lastApplied === targetOrder && !globalSearchState.query) {
@@ -371,59 +370,6 @@ import { getStorage, ref as storageRef, uploadBytes, uploadBytesResumable, getDo
         applyMemoriesSort(nextOrder);
       });
     });
-  }
-
-  const globalSearchInput = $('#global-search-input');
-  if (globalSearchInput) {
-    const globalSearchForm = $('#global-search');
-    const isSearchPage = location.pathname.includes('/search/');
-    
-    if (!isSearchPage) {
-      // On other pages, redirect to search page on submit or Enter
-      if (globalSearchForm) {
-        globalSearchForm.addEventListener('submit', e => {
-          e.preventDefault();
-          const query = globalSearchInput.value.trim();
-          if (query) {
-            const url = new URL('../search/', document.baseURI);
-            url.searchParams.set('q', query);
-            location.href = url.pathname + url.search;
-          }
-        });
-      }
-      
-      globalSearchInput.addEventListener('keydown', e => {
-        if (e.key === 'Enter') {
-          e.preventDefault();
-          const query = globalSearchInput.value.trim();
-          if (query) {
-            const url = new URL('../search/', document.baseURI);
-            url.searchParams.set('q', query);
-            location.href = url.pathname + url.search;
-          }
-        }
-      });
-    } else {
-      // On search page, perform live search
-      if (globalSearchForm) {
-        globalSearchForm.addEventListener('submit', e => e.preventDefault());
-      }
-      
-      const handleSearchPageInput = debounce(async () => {
-        const query = globalSearchInput.value.trim();
-        await performGlobalSearch(query);
-      }, 300);
-      
-      globalSearchInput.addEventListener('input', handleSearchPageInput);
-      
-      // Load from URL parameter on page load
-      const urlParams = new URLSearchParams(location.search);
-      const initialQuery = urlParams.get('q') || '';
-      if (initialQuery) {
-        globalSearchInput.value = initialQuery;
-        performGlobalSearch(initialQuery);
-      }
-    }
   }
 
   // Search results page logic
@@ -544,6 +490,56 @@ import { getStorage, ref as storageRef, uploadBytes, uploadBytesResumable, getDo
   const storage = getStorage(app);
   const ADMIN_EMAILS = ['benjaminwhite02@gmail.com', 'fran@scabetti.co.uk', 'test@beck.com', 'beckbromleyunited@gmail.com'];
   const isAdminUser = (user) => !!(user && !user.isAnonymous && ADMIN_EMAILS.includes(user.email || ''));
+
+  const globalSearchInput = $('#global-search-input');
+  if (globalSearchInput) {
+    const globalSearchForm = $('#global-search');
+    const isSearchPage = location.pathname.includes('/search/');
+    
+    if (!isSearchPage) {
+      if (globalSearchForm) {
+        globalSearchForm.addEventListener('submit', e => {
+          e.preventDefault();
+          const query = globalSearchInput.value.trim();
+          if (query) {
+            const url = new URL('../search/', document.baseURI);
+            url.searchParams.set('q', query);
+            location.href = url.pathname + url.search;
+          }
+        });
+      }
+      
+      globalSearchInput.addEventListener('keydown', e => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          const query = globalSearchInput.value.trim();
+          if (query) {
+            const url = new URL('../search/', document.baseURI);
+            url.searchParams.set('q', query);
+            location.href = url.pathname + url.search;
+          }
+        }
+      });
+    } else {
+      if (globalSearchForm) {
+        globalSearchForm.addEventListener('submit', e => e.preventDefault());
+      }
+      
+      const handleSearchPageInput = debounce(async () => {
+        const query = globalSearchInput.value.trim();
+        await performGlobalSearch(query);
+      }, 300);
+      
+      globalSearchInput.addEventListener('input', handleSearchPageInput);
+      
+      const urlParams = new URLSearchParams(location.search);
+      const initialQuery = urlParams.get('q') || '';
+      if (initialQuery) {
+        globalSearchInput.value = initialQuery;
+        performGlobalSearch(initialQuery);
+      }
+    }
+  }
 
   // Do NOT auto sign-in anonymously here to avoid overriding Google sessions.
   

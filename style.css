@@ -301,6 +301,8 @@
   flex:1 1 auto;
   max-width:320px;
   margin:0 1rem;
+  gap:8px;
+  align-items:center;
 }
 .global-search input[type="search"]{
   width:100%;
@@ -314,11 +316,29 @@
   outline:2px solid var(--accent);
   outline-offset:1px;
 }
+.global-search-button{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:0.5rem;
+  border-radius:10px;
+  border:1px solid var(--border);
+  background:var(--accent);
+  color:var(--accent-ink);
+  cursor:pointer;
+  flex-shrink:0;
+}
+.global-search-button:hover{
+  filter:brightness(.98);
+}
+.global-search-button svg{
+  display:block;
+}
 @media (max-width: 900px){
   .global-search{
     flex-basis:100%;
     max-width:none;
-    margin:0.5rem 0 0;
+    margin:0.5rem 5px 0;
     order:10;
   }
 }
