@@ -802,10 +802,10 @@ import { createSearchModule } from './search.js';
             return;
           }
           const sectionOptions = `
-            <option value="memories" ${section==='memories'?'selected':''}>19 Years</option>
-            <option value="actions" ${section==='actions'?'selected':''}>News &amp; Events — Gallery</option>
+            <option value="memories" ${section==='memories'?'selected':''}>2003-2022</option>
+            <option value="actions" ${section==='actions'?'selected':''}>2022 and beyond — Gallery</option>
             <option value="silver" ${section==='silver'?'selected':''}>Silver Threads</option>
-            <option value="news" ${section==='news'?'selected':''}>News &amp; Events — List</option>`;
+            <option value="news" ${section==='news'?'selected':''}>2022 and beyond — List</option>`;
           const safeContent = escapeHtml(post.content || '');
           controls.innerHTML = `
             <div class="panel" style="margin-top:1rem">
@@ -878,10 +878,10 @@ import { createSearchModule } from './search.js';
     }
     function sectionTitle(key) {
       switch (key) {
-        case 'memories': return '19 Years';
-        case 'actions': return 'News & Events — Gallery';
+        case 'memories': return '2003-2022';
+        case 'actions': return '2022 and beyond — Gallery';
         case 'silver': return 'Silver Threads';
-        case 'news': return 'News & Events — List';
+        case 'news': return '2022 and beyond — List';
         default: return 'Home';
       }
     }
@@ -986,7 +986,7 @@ import { createSearchModule } from './search.js';
       return { datetime: fallback, display: fallback };
     }
   
-    /* ====== News & Events Sorting ====== */
+    /* ====== 2022 and beyond sorting ====== */
     function sortNewsList() {
       const list = document.getElementById('news-list');
       if (!list) return;
@@ -1053,7 +1053,7 @@ import { createSearchModule } from './search.js';
   await renderEntryPage();
     sortNewsList();
   
-  /* ====== News & Events view toggle ====== */
+  /* ====== 2022 and beyond view toggle ====== */
   const viewToggleButtons = $$('[data-view-toggle]');
   const viewPanels = $$('[data-view-panel]');
   if (viewToggleButtons.length && viewPanels.length) {
@@ -1406,10 +1406,10 @@ import { createSearchModule } from './search.js';
               : '') : '';
         const safeContent = escapeHtml(it.content || '');
         const sectionOptions = `
-          <option value="memories" ${it.section==='memories'?'selected':''}>19 Years</option>
-            <option value="actions" ${it.section==='actions'?'selected':''}>News &amp; Events — Gallery</option>
+          <option value="memories" ${it.section==='memories'?'selected':''}>2003-2022</option>
+            <option value="actions" ${it.section==='actions'?'selected':''}>2022 and beyond — Gallery</option>
           <option value="silver" ${it.section==='silver'?'selected':''}>Silver Threads</option>
-          <option value="news" ${it.section==='news'?'selected':''}>News &amp; Events — List</option>`;
+          <option value="news" ${it.section==='news'?'selected':''}>2022 and beyond — List</option>`;
         return `
           <li class="panel" data-id="${it.id}">
             <details>
@@ -1574,10 +1574,10 @@ import { createSearchModule } from './search.js';
         const safeContent = escapeHtml(it.content || '');
         const safeTitle = escapeHtml((it.title && String(it.title).trim()) ? String(it.title).trim() : sanitizeTitle(it.content));
         const sectionOptions = `
-          <option value="memories" ${it.section==='memories'?'selected':''}>19 Years</option>
-            <option value="actions" ${it.section==='actions'?'selected':''}>News &amp; Events — Gallery</option>
+          <option value="memories" ${it.section==='memories'?'selected':''}>2003-2022</option>
+            <option value="actions" ${it.section==='actions'?'selected':''}>2022 and beyond — Gallery</option>
           <option value="silver" ${it.section==='silver'?'selected':''}>Silver Threads</option>
-          <option value="news" ${it.section==='news'?'selected':''}>News &amp; Events — List</option>`;
+          <option value="news" ${it.section==='news'?'selected':''}>2022 and beyond — List</option>`;
         return `
           <li class="panel" data-id="${it.id}">
             <details>
