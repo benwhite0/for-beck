@@ -280,6 +280,7 @@
   padding:0.55rem 1rem;
   font-weight:600;
   cursor:pointer;
+  color:var(--ink);
   transition:background .2s ease, color .2s ease, border-color .2s ease;
 }
 .view-toggle-btn.is-active{

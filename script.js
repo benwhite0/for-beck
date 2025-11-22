@@ -822,6 +822,7 @@ import { createSearchModule } from './search.js';
               </div>
               <form id="entry-edit-form" hidden>
                 <div class="form-grid">
+                  <label class="field field-wide"><span>Title</span><input name="title" value="${escapeHtml(post.title || '')}"></label>
                   <label class="field field-wide"><span>Content</span><textarea name="content" rows="6">${safeContent}</textarea></label>
                   <label class="field"><span>Author</span><input name="author" value="${escapeHtml(post.author || '')}"></label>
                   <label class="field"><span>Credits</span><input name="credits" value="${escapeHtml(post.credits || '')}"></label>
@@ -845,6 +846,7 @@ import { createSearchModule } from './search.js';
             if (!form) return;
             const fd = new FormData(form);
             const updates = {
+              title: String(fd.get('title') || '').trim(),
               content: String(fd.get('content') || '').trim(),
               author: String(fd.get('author') || '').trim(),
               credits: String(fd.get('credits') || '').trim(),
