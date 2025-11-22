@@ -49,7 +49,7 @@
   }
 
   
-  .header-inner{display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; padding:14px 0}
+  .header-inner{display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; padding:14px 0; position:relative}
   .brand{display:inline-flex; align-items:center; gap:.6rem; text-decoration:none; font-weight:600}
   .brand-mark{font-size:1rem; color:var(--accent)}
   .brand-text{font-family:var(--font-display); font-size:1.15rem; letter-spacing:.2px}
@@ -57,7 +57,7 @@
   @media (max-width: 900px){
     .brand{ margin-left:3px }        /* mobile / tablet */
   }
-  .site-nav{position:relative;}
+  .site-nav{position:relative; display:flex; align-items:center; gap:0}
   .site-nav .nav-list{display:flex; gap:1rem; list-style:none; margin:0; padding:0}
   .nav-link{
     text-decoration:none; padding:.5rem .75rem; border-radius:999px;
@@ -334,12 +334,55 @@
 .global-search-button svg{
   display:block;
 }
+.mobile-search-toggle{
+  display:none;
+}
 @media (max-width: 900px){
+  .mobile-search-toggle{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    width:44px;
+    height:36px;
+    margin-right:6px;
+    border:1px solid var(--border);
+    border-radius:10px;
+    background:var(--accent);
+    color:var(--accent-ink);
+    padding:0;
+    cursor:pointer;
+  }
+  .mobile-search-toggle:hover{
+    filter:brightness(.98);
+  }
+  .mobile-search-toggle svg{
+    display:block;
+  }
   .global-search{
-    flex-basis:100%;
+    position:absolute;
+    top:100%;
+    left:0;
+    right:0;
+    flex-basis:auto;
     max-width:none;
-    margin:0.5rem 5px 0;
-    order:10;
+    margin:0;
+    padding:12px 20px;
+    background:rgba(247,244,239,.95);
+    backdrop-filter:blur(6px);
+    border-bottom:1px solid var(--border);
+    transform:translateY(-100%);
+    opacity:0;
+    pointer-events:none;
+    transition:transform .25s ease, opacity .25s ease;
+    order:initial;
+  }
+  .global-search.is-expanded{
+    transform:translateY(0);
+    opacity:1;
+    pointer-events:auto;
+  }
+  .global-search-button{
+    display:flex;
   }
 }
   .card-meta{display:flex; gap:10px; flex-wrap:wrap; color:var(--muted); font-size:.9rem}
@@ -542,15 +585,33 @@
   
   /* ========= News List ========= */
   .news-list{list-style:none; padding:0; margin:0; display:grid; gap:12px}
-  .news-item{display:grid; grid-template-columns: 130px 1fr; gap:16px; background:var(--panel); border:1px solid var(--border); border-radius:12px; padding:14px}
-  .news-item.news-item--no-date{
+  .news-item{background:var(--panel); border:1px solid var(--border); border-radius:12px; padding:0}
+  .news-item[open]{padding:14px}
+  .news-summary{
+    display:grid;
+    grid-template-columns: 130px 1fr;
+    gap:16px;
+    padding:14px;
+    cursor:pointer;
+    list-style:none;
+  }
+  .news-summary::-webkit-details-marker{display:none}
+  .news-summary::marker{display:none}
+  .news-item[open] .news-summary{
+    padding-bottom:8px;
+    border-bottom:1px solid var(--border);
+    margin-bottom:12px;
+  }
+  .news-item.news-item--no-date .news-summary{
     grid-template-columns:1fr;
   }
-  .news-item.news-item--no-date .news-body{
-    grid-column:1 / -1;
-  }
   .news-date{font-weight:600; color:var(--muted)}
+  .news-title{margin:.1rem 0}
+  .news-body{padding:0}
   .news-body h3{margin:.1rem 0}
+  .news-body p{margin:.5rem 0}
+  .news-media{margin:.75rem 0}
+  .news-media img, .news-media video{border-radius:8px}
   .news-list-divider{
     display:flex;
     align-items:center;
@@ -585,15 +646,27 @@
       width:100%;
       margin-left:0;
       margin-right:0;
+      font-size:1.22rem;
+    }
+    .news-summary{
       grid-template-columns:1fr;
       row-gap:10px;
       padding:16px 22px;
-      font-size:1.22rem;
+    }
+    .news-item[open]{
+      padding:0;
+    }
+    .news-item[open] .news-summary{
+      padding:16px 22px;
+      padding-bottom:12px;
+    }
+    .news-item[open] .news-body{
+      padding:0 22px 16px 22px;
     }
     .news-date{
       font-size:1.16rem;
     }
-    .news-body .h3{
+    .news-title{
       font-size:1.34rem;
     }
     #admin-approvals .panel{

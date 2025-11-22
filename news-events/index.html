@@ -23,6 +23,12 @@
       </button>
     </form>
     <nav class="site-nav" aria-label="Primary">
+      <button class="mobile-search-toggle" aria-label="Toggle search" aria-expanded="false">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"></circle>
+          <path d="m21 21-4.35-4.35"></path>
+        </svg>
+      </button>
       <button class="nav-toggle" aria-label="Toggle navigation" aria-expanded="false" aria-controls="nav-menu">
         <span class="nav-toggle-bars" aria-hidden="true"></span>
       </button>
@@ -56,8 +62,8 @@
   <section class="section">
     <div class="container">
       <div class="view-toggle" data-view-group>
-        <button class="view-toggle-btn is-active" type="button" data-view-toggle="gallery" aria-pressed="true" aria-controls="news-gallery-panel">Gallery view</button>
-        <button class="view-toggle-btn" type="button" data-view-toggle="list" aria-pressed="false" aria-controls="news-list-panel">List view</button>
+        <button class="view-toggle-btn is-active" type="button" data-view-toggle="gallery" aria-pressed="true" aria-controls="news-gallery-panel">In pictures</button>
+        <button class="view-toggle-btn" type="button" data-view-toggle="list" aria-pressed="false" aria-controls="news-list-panel">Diary of events</button>
       </div>
     </div>
     <div class="container view-panel is-active" data-view-panel="gallery" id="news-gallery-panel">

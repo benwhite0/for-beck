@@ -8,13 +8,6 @@ export function createSearchModule({
   sanitizeTitle,
   formatNewsContent,
   fetchSectionPosts,
-  fetchNewsEventsPosts = async () => {
-    const [actions, news] = await Promise.all([
-      fetchSectionPosts('actions'),
-      fetchSectionPosts('news')
-    ]);
-    return [...actions, ...news];
-  },
   debounce,
   memoriesState,
   applyMemoriesSort
@@ -133,24 +126,25 @@ export function createSearchModule({
 
     summaryEl.textContent = 'Searching...';
 
-    const [memoriesList, silverList, newsEventsList] = await Promise.all([
+    const [memoriesList, silverList, actionsList, newsList] = await Promise.all([
       fetchSectionPosts('memories'),
       fetchSectionPosts('silver'),
-      fetchNewsEventsPosts()
+      fetchSectionPosts('actions'),
+      fetchSectionPosts('news')
     ]);
 
     const terms = buildMemoriesSearchTerms(normalized);
 
     const memoriesFiltered = filterMemoriesList(memoriesList, terms);
     const silverFiltered = filterMemoriesList(silverList, terms);
-    const newsEventsFiltered = filterMemoriesList(newsEventsList, terms);
-    const actionsFiltered = newsEventsFiltered.slice();
-    const newsFiltered = newsEventsFiltered.slice();
+    const actionsFiltered = filterMemoriesList(actionsList, terms);
+    const newsFiltered = filterMemoriesList(newsList, terms);
 
     const totalResults =
       memoriesFiltered.length +
       silverFiltered.length +
-      newsEventsFiltered.length;
+      actionsFiltered.length +
+      newsFiltered.length;
 
     if (totalResults === 0) {
       summaryEl.textContent = `No results found for "${rawQuery}"`;
@@ -200,19 +194,36 @@ export function createSearchModule({
         const dateHtml = eventInfo
           ? `<time class="news-date" datetime="${escapeHtml(eventInfo.datetime)}">${escapeHtml(eventInfo.display)}</time>`
           : '';
+        
+        let mediaHtml = '';
+        if (item.mediaURL) {
+          if (item.mediaType?.startsWith('image/')) {
+            mediaHtml = `<div class="news-media"><img alt="" src="${item.mediaURL}" /></div>`;
+          } else if (item.mediaType?.startsWith('video/')) {
+            mediaHtml = `<div class="news-media"><video controls src="${item.mediaURL}"></video></div>`;
+          } else if (item.mediaType?.startsWith('audio/')) {
+            mediaHtml = `<div class="news-media"><audio controls src="${item.mediaURL}"></audio></div>`;
+          }
+        }
+        
+        const titleText = escapeHtml(
+          item.title && String(item.title).trim()
+            ? String(item.title).trim()
+            : sanitizeTitle(item.content)
+        );
+        
         return `
         <li>
-          <div class="news-item${eventInfo ? '' : ' news-item--no-date'}">
-            ${dateHtml}
+          <details class="news-item${eventInfo ? '' : ' news-item--no-date'}">
+            <summary class="news-summary">
+              ${dateHtml}
+              <h3 class="h3 news-title">${titleText}</h3>
+            </summary>
             <div class="news-body">
-              <h3 class="h3">${escapeHtml(
-                item.title && String(item.title).trim()
-                  ? String(item.title).trim()
-                  : sanitizeTitle(item.content)
-              )}</h3>
+              ${mediaHtml}
               ${formatNewsContent(item.content)}
             </div>
-          </div>
+          </details>
         </li>`;
       })
       .join('');

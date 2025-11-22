@@ -166,47 +166,20 @@ import { createSearchModule } from './search.js';
     emptyDefault: ''
   };
 
-  const NEWS_EVENTS_SECTIONS = ['actions', 'news'];
-  let newsEventsCache = null;
-  let newsEventsCachePromise = null;
+  const SECTION_ORDER = ['memories', 'actions', 'news', 'silver'];
+  const SECTION_DISPLAY = {
+    memories: '2003-2022',
+    actions: '2022 and beyond — In pictures',
+    news: '2022 and beyond — Diary of events',
+    silver: 'Silver Threads'
+  };
 
-  async function fetchNewsEventsPosts({ force = false } = {}) {
-    if (force) {
-      newsEventsCache = null;
-      newsEventsCachePromise = null;
-    }
-    if (!force && newsEventsCache) {
-      return newsEventsCache.slice();
-    }
-    if (!force && newsEventsCachePromise) {
-      const pending = await newsEventsCachePromise;
-      return pending.slice();
-    }
-    newsEventsCachePromise = (async () => {
-      const lists = await Promise.all(
-        NEWS_EVENTS_SECTIONS.map(section =>
-          fetchSectionPosts(section).catch(() => [])
-        )
-      );
-      const seen = new Set();
-      const combined = [];
-      lists.forEach(entries => {
-        entries.forEach(item => {
-          if (!item || !item.id) return;
-          if (seen.has(item.id)) return;
-          seen.add(item.id);
-          combined.push(item);
-        });
-      });
-      return combined;
-    })();
-    try {
-      const fresh = await newsEventsCachePromise;
-      newsEventsCache = fresh;
-      return fresh.slice();
-    } finally {
-      newsEventsCachePromise = null;
-    }
+  function buildSectionOptions(selectedSection){
+    return SECTION_ORDER.map(section => {
+      const label = SECTION_DISPLAY[section] || section;
+      const isSelected = section === selectedSection ? ' selected' : '';
+      return `<option value="${section}"${isSelected}>${label}</option>`;
+    }).join('');
   }
 
   function shuffleArray(list){
@@ -272,7 +245,6 @@ import { createSearchModule } from './search.js';
     sanitizeTitle,
     formatNewsContent,
     fetchSectionPosts,
-    fetchNewsEventsPosts,
     debounce,
     memoriesState,
     applyMemoriesSort
@@ -389,26 +361,49 @@ import { createSearchModule } from './search.js';
 
   // Do NOT auto sign-in anonymously here to avoid overriding Google sessions.
   
-    /* ====== Mobile Nav ====== */
-    const header = $('.site-header');
-    const nav = $('.site-nav', header);
-    const toggle = $('.nav-toggle', header);
-    if (toggle && nav) {
-      toggle.addEventListener('click', () => {
-        const expanded = nav.getAttribute('aria-expanded') === 'true';
-        nav.setAttribute('aria-expanded', String(!expanded));
-        toggle.setAttribute('aria-expanded', String(!expanded));
-      });
-    // Inject Admin link into nav (visible to everyone; auth required on page)
-    const navList = nav.querySelector('.nav-list');
-    if (navList && !navList.querySelector('[data-admin-link]')){
-      const li = document.createElement('li');
-      const base = document.baseURI || location.href;
-      const url = new URL('../approve/index.html', base);
-      li.innerHTML = `<a class="nav-link" href="${url.pathname}${url.search}" data-admin-link>Admin</a>`;
-      navList.appendChild(li);
-    }
-    }
+  /* ====== Mobile Nav ====== */
+  const header = $('.site-header');
+  const nav = $('.site-nav', header);
+  const toggle = $('.nav-toggle', header);
+  if (toggle && nav) {
+    toggle.addEventListener('click', () => {
+      const expanded = nav.getAttribute('aria-expanded') === 'true';
+      nav.setAttribute('aria-expanded', String(!expanded));
+      toggle.setAttribute('aria-expanded', String(!expanded));
+    });
+  // Inject Admin link into nav (visible to everyone; auth required on page)
+  const navList = nav.querySelector('.nav-list');
+  if (navList && !navList.querySelector('[data-admin-link]')){
+    const li = document.createElement('li');
+    const base = document.baseURI || location.href;
+    const url = new URL('../approve/index.html', base);
+    li.innerHTML = `<a class="nav-link" href="${url.pathname}${url.search}" data-admin-link>Admin</a>`;
+    navList.appendChild(li);
+  }
+  }
+
+  /* ====== Mobile Search Toggle ====== */
+  const mobileSearchToggle = $('.mobile-search-toggle', header);
+  const globalSearch = $('.global-search', header);
+  if (mobileSearchToggle && globalSearch) {
+    mobileSearchToggle.addEventListener('click', () => {
+      const isExpanded = globalSearch.classList.contains('is-expanded');
+      globalSearch.classList.toggle('is-expanded');
+      mobileSearchToggle.setAttribute('aria-expanded', String(!isExpanded));
+      if (!isExpanded) {
+        const searchInput = globalSearch.querySelector('input[type="search"]');
+        if (searchInput) {
+          setTimeout(() => searchInput.focus(), 100);
+        }
+      }
+    });
+    document.addEventListener('click', (e) => {
+      if (!globalSearch.contains(e.target) && !mobileSearchToggle.contains(e.target)) {
+        globalSearch.classList.remove('is-expanded');
+        mobileSearchToggle.setAttribute('aria-expanded', 'false');
+      }
+    });
+  }
   
   /* ====== Modal (optional submit modal on some pages) ====== */
     const modal = $('#submission-modal');
@@ -628,9 +623,7 @@ import { createSearchModule } from './search.js';
   async function renderFeed(section, feedEl) {
       if (!feedEl) return;
     feedEl.setAttribute('aria-busy', 'true');
-    const list = section === 'actions'
-      ? await fetchNewsEventsPosts()
-      : await fetchSectionPosts(section);
+    const list = await fetchSectionPosts(section);
       const emptyMsg = document.querySelector(`[data-empty-for="${section}"]`);
       if (section === 'memories') {
         memoriesState.feedEl = feedEl;
@@ -701,7 +694,7 @@ import { createSearchModule } from './search.js';
   async function renderNewsList() {
     const listEl = document.getElementById('news-list');
     if (!listEl) return;
-    const posts = await fetchNewsEventsPosts();
+    const posts = await fetchSectionPosts('news');
     listEl.querySelectorAll('.js-news-dynamic, .news-list-divider').forEach(node => node.remove());
     if (!posts.length) return;
     const sortedPosts = posts.slice().sort(compareSubmissionsByEventDate);
@@ -714,14 +707,31 @@ import { createSearchModule } from './search.js';
       const dateHtml = eventInfo
         ? `<time class="news-date" datetime="${escapeHtml(eventInfo.datetime)}">${escapeHtml(eventInfo.display)}</time>`
         : '';
+      
+      let mediaHtml = '';
+      if (item.mediaURL) {
+        if (item.mediaType?.startsWith('image/')) {
+          mediaHtml = `<div class="news-media"><img alt="" src="${item.mediaURL}" /></div>`;
+        } else if (item.mediaType?.startsWith('video/')) {
+          mediaHtml = `<div class="news-media"><video controls src="${item.mediaURL}"></video></div>`;
+        } else if (item.mediaType?.startsWith('audio/')) {
+          mediaHtml = `<div class="news-media"><audio controls src="${item.mediaURL}"></audio></div>`;
+        }
+      }
+      
+      const titleText = escapeHtml(item.title && String(item.title).trim() ? String(item.title).trim() : sanitizeTitle(item.content));
+      
       li.innerHTML = `
-        <div class="news-item${eventInfo ? '' : ' news-item--no-date'}">
-          ${dateHtml}
+        <details class="news-item${eventInfo ? '' : ' news-item--no-date'}">
+          <summary class="news-summary">
+            ${dateHtml}
+            <h3 class="h3 news-title">${titleText}</h3>
+          </summary>
           <div class="news-body">
-            <h3 class="h3">${escapeHtml(item.title && String(item.title).trim() ? String(item.title).trim() : sanitizeTitle(item.content))}</h3>
+            ${mediaHtml}
             ${formatNewsContent(item.content)}
           </div>
-        </div>
+        </details>
       `;
       if (eventTime !== null) {
         li.dataset.eventTime = String(eventTime);
@@ -735,6 +745,7 @@ import { createSearchModule } from './search.js';
     if (searchState) {
       searchState.newsList = posts.slice();
     }
+    ensureCompatibleImages(listEl);
   }
 
     /* ====== Entry Page Rendering ====== */
@@ -801,11 +812,7 @@ import { createSearchModule } from './search.js';
             controls.innerHTML = '';
             return;
           }
-          const sectionOptions = `
-            <option value="memories" ${section==='memories'?'selected':''}>2003-2022</option>
-            <option value="actions" ${section==='actions'?'selected':''}>2022 and beyond — Gallery</option>
-            <option value="silver" ${section==='silver'?'selected':''}>Silver Threads</option>
-            <option value="news" ${section==='news'?'selected':''}>2022 and beyond — List</option>`;
+          const sectionOptions = buildSectionOptions(section);
           const safeContent = escapeHtml(post.content || '');
           controls.innerHTML = `
             <div class="panel" style="margin-top:1rem">
@@ -877,13 +884,7 @@ import { createSearchModule } from './search.js';
       }
     }
     function sectionTitle(key) {
-      switch (key) {
-        case 'memories': return '2003-2022';
-        case 'actions': return '2022 and beyond — Gallery';
-        case 'silver': return 'Silver Threads';
-        case 'news': return '2022 and beyond — List';
-        default: return 'Home';
-      }
+      return SECTION_DISPLAY[key] || 'Home';
     }
   
     /* ====== Utilities ====== */
@@ -1405,11 +1406,8 @@ import { createSearchModule } from './search.js';
               ? `<audio controls src="${it.mediaURL}"></audio>`
               : '') : '';
         const safeContent = escapeHtml(it.content || '');
-        const sectionOptions = `
-          <option value="memories" ${it.section==='memories'?'selected':''}>2003-2022</option>
-            <option value="actions" ${it.section==='actions'?'selected':''}>2022 and beyond — Gallery</option>
-          <option value="silver" ${it.section==='silver'?'selected':''}>Silver Threads</option>
-          <option value="news" ${it.section==='news'?'selected':''}>2022 and beyond — List</option>`;
+        const safeEmail = escapeHtml(it.email || '');
+        const sectionOptions = buildSectionOptions(it.section);
         return `
           <li class="panel" data-id="${it.id}">
             <details>
@@ -1417,6 +1415,7 @@ import { createSearchModule } from './search.js';
                 <div class="small muted" data-field="meta">${it.section} • ${postedISO ? formatDate(postedISO) : ''}</div>
                 <h3 class="h3" style="margin:0.25rem 0" data-field="title">${escapeHtml((it.title && String(it.title).trim()) ? String(it.title).trim() : sanitizeTitle(it.content))}</h3>
                 <div class="small muted" data-field="byline">${escapeHtml(it.author || 'Anonymous')}${it.credits ? ' • ' + escapeHtml(it.credits) : ''}${it.eventDate ? ' • ' + escapeHtml(it.eventDate) : ''}</div>
+                ${safeEmail ? `<div class="small muted" data-field="email">Email: ${safeEmail}</div>` : ''}
               </summary>
               <div style="margin-top:0.5rem" data-field="media">${media}</div>
               <div class="small" style="margin-top:0.5rem;white-space:pre-wrap" data-field="content">${safeContent}</div>
@@ -1572,12 +1571,9 @@ import { createSearchModule } from './search.js';
               ? `<audio controls src="${it.mediaURL}"></audio>`
               : '') : '';
         const safeContent = escapeHtml(it.content || '');
+        const safeEmail = escapeHtml(it.email || '');
         const safeTitle = escapeHtml((it.title && String(it.title).trim()) ? String(it.title).trim() : sanitizeTitle(it.content));
-        const sectionOptions = `
-          <option value="memories" ${it.section==='memories'?'selected':''}>2003-2022</option>
-            <option value="actions" ${it.section==='actions'?'selected':''}>2022 and beyond — Gallery</option>
-          <option value="silver" ${it.section==='silver'?'selected':''}>Silver Threads</option>
-          <option value="news" ${it.section==='news'?'selected':''}>2022 and beyond — List</option>`;
+        const sectionOptions = buildSectionOptions(it.section);
         return `
           <li class="panel" data-id="${it.id}">
             <details>
@@ -1585,6 +1581,7 @@ import { createSearchModule } from './search.js';
                 <div class="small muted" data-field="meta">${it.section} • ${postedISO ? formatDate(postedISO) : ''}</div>
                 <h3 class="h3" style="margin:0.25rem 0" data-field="title">${safeTitle}</h3>
                 <div class="small muted" data-field="byline">${escapeHtml(it.author || 'Anonymous')}${it.credits ? ' • ' + escapeHtml(it.credits) : ''}${it.eventDate ? ' • ' + escapeHtml(it.eventDate) : ''}</div>
+                ${safeEmail ? `<div class="small muted" data-field="email">Email: ${safeEmail}</div>` : ''}
               </summary>
               <div style="margin-top:0.5rem" data-field="media">${media}</div>
               <div class="small" style="margin-top:0.5rem;white-space:pre-wrap" data-field="content">${safeContent}</div>
