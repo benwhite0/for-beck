@@ -202,11 +202,11 @@ import { createSearchModule } from './search.js';
       let mediaHtml = '';
       if (hasMedia) {
         if (item.mediaType?.startsWith('image/')) {
-          mediaHtml = `<div class="card-media"><img alt="" src="${item.mediaURL}" /></div>`;
+          mediaHtml = `<div class="card-media"><img alt="" src="${item.mediaURL}" loading="lazy" /></div>`;
         } else if (item.mediaType?.startsWith('video/')) {
-          mediaHtml = `<div class="card-media"><video controls src="${item.mediaURL}"></video></div>`;
+          mediaHtml = `<div class="card-media"><video controls src="${item.mediaURL}" preload="metadata"></video></div>`;
         } else if (item.mediaType?.startsWith('audio/')) {
-          mediaHtml = `<div class="card-media"><audio controls src="${item.mediaURL}"></audio></div>`;
+          mediaHtml = `<div class="card-media"><audio controls src="${item.mediaURL}" preload="metadata"></audio></div>`;
         }
       }
       const displayTitle = (item.title && String(item.title).trim()) ? String(item.title).trim() : sanitizeTitle(item.content);
@@ -485,7 +485,6 @@ import { createSearchModule } from './search.js';
       let working = file;
       if (looksHeicMime || hasHeicExt) {
         const converted = await convertHeicFile(file);
-        if (converted !== file) return converted;
         working = converted;
         if (/image\/(heic|heif)/i.test(working.type || '') || HEIC_EXT_RE.test(working.name || '')) {
           return working;
@@ -711,11 +710,11 @@ import { createSearchModule } from './search.js';
       let mediaHtml = '';
       if (item.mediaURL) {
         if (item.mediaType?.startsWith('image/')) {
-          mediaHtml = `<div class="news-media"><img alt="" src="${item.mediaURL}" /></div>`;
+          mediaHtml = `<div class="news-media"><img alt="" src="${item.mediaURL}" loading="lazy" /></div>`;
         } else if (item.mediaType?.startsWith('video/')) {
-          mediaHtml = `<div class="news-media"><video controls src="${item.mediaURL}"></video></div>`;
+          mediaHtml = `<div class="news-media"><video controls src="${item.mediaURL}" preload="metadata"></video></div>`;
         } else if (item.mediaType?.startsWith('audio/')) {
-          mediaHtml = `<div class="news-media"><audio controls src="${item.mediaURL}"></audio></div>`;
+          mediaHtml = `<div class="news-media"><audio controls src="${item.mediaURL}" preload="metadata"></audio></div>`;
         }
       }
       
@@ -778,11 +777,11 @@ import { createSearchModule } from './search.js';
         let mediaHtml = '';
     if (post.mediaURL) {
           if (post.mediaType?.startsWith('image/')) {
-        mediaHtml = `<div class="entry-media"><img alt="" src="${post.mediaURL}" /></div>`;
+        mediaHtml = `<div class="entry-media"><img alt="" src="${post.mediaURL}" loading="eager" /></div>`;
           } else if (post.mediaType?.startsWith('video/')) {
-        mediaHtml = `<div class="entry-media"><video controls src="${post.mediaURL}"></video></div>`;
+        mediaHtml = `<div class="entry-media"><video controls src="${post.mediaURL}" preload="metadata"></video></div>`;
           } else if (post.mediaType?.startsWith('audio/')) {
-        mediaHtml = `<div class="entry-media"><audio controls src="${post.mediaURL}"></audio></div>`;
+        mediaHtml = `<div class="entry-media"><audio controls src="${post.mediaURL}" preload="metadata"></audio></div>`;
           }
         }
         const eventDate = post.eventDate ? `<p class="muted small">Event date: ${formatDate(post.eventDate)}</p>` : '';
@@ -1222,7 +1221,7 @@ import { createSearchModule } from './search.js';
         pageForm.reset();
         resetCaptcha();
         if (submitFormButton) submitFormButton.disabled = true;
-        alert('Thank you! We’ll let you know when it’s posted.');
+        alert("Thank you! We'll let you know when it's posted.");
       } catch (err) {
         const message = getSubmissionErrorMessage(err, 'Submission failed. Please try again.');
         alert(message);
@@ -1401,11 +1400,11 @@ import { createSearchModule } from './search.js';
       listEl.innerHTML = items.map(it => {
         const postedISO = it.postedAt?.toDate ? it.postedAt.toDate().toISOString() : '';
         const media = it.mediaURL ? (it.mediaType?.startsWith('image/')
-          ? `<img alt="" src="${it.mediaURL}" style="max-width:640px;max-height:480px;object-fit:contain"/>`
+          ? `<img alt="" src="${it.mediaURL}" style="max-width:640px;max-height:480px;object-fit:contain" loading="lazy" />`
           : it.mediaType?.startsWith('video/')
-            ? `<video controls src="${it.mediaURL}" style="max-width:640px"></video>`
+            ? `<video controls src="${it.mediaURL}" style="max-width:640px" preload="metadata"></video>`
             : it.mediaType?.startsWith('audio/')
-              ? `<audio controls src="${it.mediaURL}"></audio>`
+              ? `<audio controls src="${it.mediaURL}" preload="metadata"></audio>`
               : '') : '';
         const safeContent = escapeHtml(it.content || '');
         const safeEmail = escapeHtml(it.email || '');
@@ -1566,11 +1565,11 @@ import { createSearchModule } from './search.js';
       vList.innerHTML = vitems.map(it => {
         const postedISO = it.postedAt?.toDate ? it.postedAt.toDate().toISOString() : '';
         const media = it.mediaURL ? (it.mediaType?.startsWith('image/')
-          ? `<img alt="" src="${it.mediaURL}" style="max-width:640px;max-height:480px;object-fit:contain"/>`
+          ? `<img alt="" src="${it.mediaURL}" style="max-width:640px;max-height:480px;object-fit:contain" loading="lazy" />`
           : it.mediaType?.startsWith('video/')
-            ? `<video controls src="${it.mediaURL}" style="max-width:640px"></video>`
+            ? `<video controls src="${it.mediaURL}" style="max-width:640px" preload="metadata"></video>`
             : it.mediaType?.startsWith('audio/')
-              ? `<audio controls src="${it.mediaURL}"></audio>`
+              ? `<audio controls src="${it.mediaURL}" preload="metadata"></audio>`
               : '') : '';
         const safeContent = escapeHtml(it.content || '');
         const safeEmail = escapeHtml(it.email || '');
