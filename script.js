@@ -2,120 +2,65 @@
 
 // ESM-only: ensure HTML pages load this with <script type="module" src="script.js"></script>
 
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js';
-import { getAuth, onAuthStateChanged, signInAnonymously, signOut, GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js';
-import { getFirestore, collection, addDoc, getDoc, getDocs, doc, query, where, orderBy, limit, updateDoc, deleteDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js';
-import { getStorage, ref as storageRef, uploadBytes, uploadBytesResumable, getDownloadURL } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-storage.js';
 import { createSearchModule } from './search.js';
+
+// Modular imports
+import {
+  SECTION_ORDER,
+  SECTION_DISPLAY,
+  debounce,
+  escapeHtml,
+  formatDate,
+  sanitizeTitle,
+  makeSnippet,
+  parseDateValue,
+  compareSubmissionsByEventDate,
+  compareSubmissionsByEventDateAsc,
+  getEventDateInfo,
+  shuffleArray,
+  formatNewsContent,
+  sectionKeyToFeedId,
+  sectionPage,
+  sectionTitle,
+  buildSectionOptions
+} from './utils.js';
+
+import {
+  auth,
+  db,
+  ADMIN_EMAILS,
+  isAdminUser,
+  onAuthStateChanged,
+  signInAnonymously,
+  signOut,
+  GoogleAuthProvider,
+  signInWithPopup,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  sendPasswordResetEmail,
+  collection,
+  addDoc,
+  getDoc,
+  getDocs,
+  doc,
+  query,
+  where,
+  orderBy,
+  limit,
+  updateDoc,
+  deleteDoc,
+  serverTimestamp
+} from './firebase.js';
+
+import { ensureCompatibleImages } from './heic.js';
+
+import { uploadMedia } from './media.js';
 
 (async function(){
     const $ = (sel, root = document) => root.querySelector(sel);
     const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
 
-  const HEIC_EXT_RE = /\.(heic|heif)(?:$|[?#])/i;
-  let heicLoaderPromise;
-
-  const renameWithExt = (name = 'image', ext) => {
-    const base = String(name || '').replace(/\.[^/.]+$/, '');
-    return `${base || 'image'}${ext}`;
-  };
-
-  async function loadHeic2Any(){
-    if (window.heic2any) return;
-    if (!heicLoaderPromise) {
-      heicLoaderPromise = new Promise((resolve, reject) => {
-        const script = document.createElement('script');
-        script.src = 'https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js';
-        script.async = true;
-        script.onload = resolve;
-        script.onerror = () => {
-          heicLoaderPromise = undefined;
-          reject(new Error('Failed to load HEIC converter'));
-        };
-        document.head.appendChild(script);
-      });
-    }
-    await heicLoaderPromise;
-  }
-
-  async function convertHeicFile(file){
-    const looksHeic = /image\/(heic|heif)/i.test(file?.type || '') || HEIC_EXT_RE.test(file?.name || '');
-    if (!looksHeic || !file) return file;
-    console.info('[heic] attempting conversion', { name: file.name, type: file.type, size: file.size });
-    try {
-      await loadHeic2Any();
-      try {
-        const webpBlob = await window.heic2any({ blob: file, toType: 'image/webp', quality: 0.86 });
-        const converted = new File([webpBlob], renameWithExt(file.name, '.webp'), { type: 'image/webp' });
-        console.info('[heic] converted to webp', { type: converted.type, size: converted.size });
-        return converted;
-      } catch (errWebp) {
-        console.warn('[heic] webp conversion failed, retrying jpeg', errWebp);
-        const jpgBlob = await window.heic2any({ blob: file, toType: 'image/jpeg', quality: 0.88 });
-        const converted = new File([jpgBlob], renameWithExt(file.name, '.jpg'), { type: 'image/jpeg' });
-        console.info('[heic] converted to jpeg', { type: converted.type, size: converted.size });
-        return converted;
-      }
-    } catch (err) {
-      console.error('[heic] conversion failed, returning original', err);
-      return file;
-    }
-  }
-
-  function ensureCompatibleImages(root = document){
-    root.querySelectorAll('img').forEach(img => {
-      const src = img.getAttribute('src') || '';
-      if (HEIC_EXT_RE.test(src)) convertImageElement(img);
-      else img.addEventListener('error', () => convertImageElement(img), { once: true });
-    });
-  }
-
-  async function convertImageElement(img){
-    if (!img || img.dataset.heicConverted === '1') return;
-    const src = img.getAttribute('src');
-    if (!src) return;
-    img.dataset.heicConverted = '1';
-    try {
-      await loadHeic2Any();
-      const res = await fetch(src, { mode: 'cors' });
-      const blob = await res.blob();
-      const looksHeic = /image\/(heic|heif)/i.test(blob.type || '') || HEIC_EXT_RE.test(src);
-      if (!looksHeic) {
-        img.dataset.heicConverted = '';
-        return;
-      }
-      let converted;
-      try {
-        converted = await window.heic2any({ blob, toType: 'image/webp', quality: 0.86 });
-      } catch {
-        converted = await window.heic2any({ blob, toType: 'image/jpeg', quality: 0.88 });
-      }
-      const nextSrc = URL.createObjectURL(converted);
-      const prevSrc = img.dataset.heicObjectUrl;
-      if (prevSrc) URL.revokeObjectURL(prevSrc);
-      img.dataset.heicObjectUrl = nextSrc;
-      img.src = nextSrc;
-      img.addEventListener('load', () => {
-        const current = img.dataset.heicObjectUrl;
-        if (current) {
-          URL.revokeObjectURL(current);
-          delete img.dataset.heicObjectUrl;
-        }
-      }, { once: true });
-    } catch {
-      img.dataset.heicConverted = '';
-    }
-  }
-
   const masonryResizeHandlers = new WeakMap();
-
-  const debounce = (fn, wait = 120) => {
-    let timer;
-    return (...args) => {
-      clearTimeout(timer);
-      timer = setTimeout(() => fn(...args), wait);
-    };
-  };
 
   function applyMasonryLayout(grid){
     if (!grid || !grid.classList.contains('card-grid-memories')) return;
@@ -166,30 +111,6 @@ import { createSearchModule } from './search.js';
     emptyDefault: ''
   };
 
-  const SECTION_ORDER = ['memories', 'actions', 'news', 'silver'];
-  const SECTION_DISPLAY = {
-    memories: '2003-2022',
-    actions: '2022 and beyond — In pictures',
-    news: '2022 and beyond — Diary of events',
-    silver: 'Silver Threads'
-  };
-
-  function buildSectionOptions(selectedSection){
-    return SECTION_ORDER.map(section => {
-      const label = SECTION_DISPLAY[section] || section;
-      const isSelected = section === selectedSection ? ' selected' : '';
-      return `<option value="${section}"${isSelected}>${label}</option>`;
-    }).join('');
-  }
-
-  function shuffleArray(list){
-    const arr = list.slice();
-    for (let i = arr.length - 1; i > 0; i -= 1) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [arr[i], arr[j]] = [arr[j], arr[i]];
-    }
-    return arr;
-  }
 
   function renderFeedListToElement(feedEl, list, section){
     if (!feedEl) return;
@@ -332,22 +253,6 @@ import { createSearchModule } from './search.js';
   }
 
 
-  /* ====== Firebase Init ====== */
-  const firebaseConfig = {
-    apiKey: "AIzaSyChj8gAgnTq2H2YGMd0iHI4W44ztidh9K8",
-    authDomain: "beck-742dc.firebaseapp.com",
-    projectId: "beck-742dc",
-    storageBucket: "beck-742dc.firebasestorage.app",
-    messagingSenderId: "43212058207",
-    appId: "1:43212058207:web:42c193dc771e51124ab5ea",
-    measurementId: "G-59NXN5V5JM"
-  };
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
-  const db = getFirestore(app);
-  const storage = getStorage(app);
-  const ADMIN_EMAILS = ['benjaminwhite02@gmail.com', 'fran@scabetti.co.uk', 'test@beck.com', 'beckbromleyunited@gmail.com'];
-  const isAdminUser = (user) => !!(user && !user.isAnonymous && ADMIN_EMAILS.includes(user.email || ''));
 
   const globalSearchInput = $('#global-search-input');
   if (globalSearchInput && searchModule) {
@@ -433,15 +338,6 @@ import { createSearchModule } from './search.js';
     $$('[data-close-modal]').forEach(btn => btn.addEventListener('click', closeModal));
     document.addEventListener('keydown', e => e.key === 'Escape' && closeModal());
   
-    function sectionKeyToFeedId(key) {
-      switch (key) {
-        case 'memories': return 'feed-memories';
-        case 'actions': return 'feed-actions';
-        case 'silver': return 'feed-silver';
-        case 'news': return 'news-list';
-        default: return 'feed-memories';
-      }
-    }
   
   /* ====== Firestore Queries ====== */
   async function fetchSectionPosts(section) {
@@ -469,111 +365,6 @@ import { createSearchModule } from './search.js';
     return { id: d.id, ...data };
   }
 
-  // Client-side image compression (iPad/desktop-friendly)
-  async function compressImageIfNeeded(file) {
-    try {
-      if (!file) return file;
-      const name = file.name || '';
-      const type = file.type || '';
-      const hasImageMime = type.startsWith('image/');
-      const hasHeicExt = HEIC_EXT_RE.test(name);
-      const looksHeicMime = /image\/(heic|heif)/i.test(type);
-      const treatAsImage = hasImageMime || hasHeicExt;
-      console.info('[image] inspect file', { name, type, size: file.size, hasImageMime, hasHeicExt, looksHeicMime });
-      if (!treatAsImage) return file;
-
-      let working = file;
-      if (looksHeicMime || hasHeicExt) {
-        const converted = await convertHeicFile(file);
-        working = converted;
-        if (/image\/(heic|heif)/i.test(working.type || '') || HEIC_EXT_RE.test(working.name || '')) {
-          return working;
-        }
-      }
-
-      if (!(working.type || '').startsWith('image/')) {
-        console.warn('[image] skipping compression, no image mime after conversion', { name: working.name, type: working.type });
-        return working;
-      }
-
-      // Read into image
-      const dataUrl = await new Promise((res, rej) => {
-        const r = new FileReader();
-        r.onload = () => res(r.result);
-        r.onerror = rej;
-        r.readAsDataURL(working);
-      });
-      const img = new Image();
-      const loadP = new Promise((res, rej) => { img.onload = res; img.onerror = rej; });
-      img.src = dataUrl;
-      await loadP;
-      const maxDim = 2000; // max width/height
-      let { width, height } = img;
-      const scale = Math.min(1, maxDim / Math.max(width, height));
-      const targetW = Math.max(1, Math.round(width * scale));
-      const targetH = Math.max(1, Math.round(height * scale));
-      const canvas = document.createElement('canvas');
-      canvas.width = targetW;
-      canvas.height = targetH;
-      const ctx = canvas.getContext('2d');
-      if (!ctx) return working;
-      ctx.drawImage(img, 0, 0, targetW, targetH);
-      const quality = 0.82;
-      const blob = await new Promise(res => canvas.toBlob(res, 'image/jpeg', quality));
-      if (!blob) return working;
-      // If compression didn’t help, keep original
-      if (blob.size >= working.size) return working;
-      return new File([blob], (working.name || 'image')
-        .replace(/\.(heic|heif|png|webp|jpg|jpeg)$/i, '') + '.jpg', { type: 'image/jpeg' });
-    } catch (err) {
-      console.error('[image] compression failed, returning original', err);
-      return file; // fall back safely
-    }
-  }
-
-  async function uploadMedia(file, section, onProgress) {
-    if (!file) return { mediaURL: '', mediaType: '' };
-    // Prepare file: compress images; enforce size/type limits
-    let prepared = file;
-    const originalMeta = file ? { name: file.name, type: file.type, size: file.size } : null;
-    prepared = await compressImageIfNeeded(file);
-    if (originalMeta) {
-      if (prepared !== file) {
-        console.info('[upload] image prepared', {
-          original: originalMeta,
-          prepared: { name: prepared.name, type: prepared.type, size: prepared.size }
-        });
-      } else {
-        console.info('[upload] image unchanged', originalMeta);
-      }
-    }
-    const MAX_BYTES = 50 * 1024 * 1024; // 50MB safeguard (mirrors rules)
-    if (prepared.size > MAX_BYTES) {
-      throw new Error('File too large. Please choose a file under 50 MB.');
-    }
-
-    const fileName = `${Date.now()}-${prepared.name}`;
-    const path = `submissions/${auth.currentUser?.uid || 'anon'}/${section}/${fileName}`;
-    const ref = storageRef(storage, path);
-    // Track progress (works on iPad/desktop)
-    if (onProgress) {
-      const task = uploadBytesResumable(ref, prepared, { contentType: prepared.type });
-      await new Promise((resolve, reject) => {
-        task.on('state_changed', snap => {
-          try {
-            const pct = Math.round((snap.bytesTransferred / Math.max(1, snap.totalBytes)) * 100);
-            onProgress(pct);
-          } catch {}
-        }, reject, resolve);
-      });
-      console.info('[upload] completed with resumable task', { bytes: prepared.size, path });
-    } else {
-      await uploadBytes(ref, prepared, { contentType: prepared.type });
-      console.info('[upload] completed without progress listener', { bytes: prepared.size, path });
-    }
-    const url = await getDownloadURL(ref);
-    return { mediaURL: url, mediaType: prepared.type };
-  }
 
   async function createSubmission({ author, email = '', credits, section, eventDate, title, content, file }, onProgress) {
     const { mediaURL, mediaType } = await uploadMedia(file, section, onProgress);
@@ -684,11 +475,6 @@ import { createSearchModule } from './search.js';
     renderFeedListToElement(feedEl, sortedList, section);
     }
   
-  function formatNewsContent(text) {
-    return escapeHtml(text || '').replace(/\n{2,}/g, '\n\n').split('\n\n').map(
-      block => `<p>${block.replace(/\n/g, '<br />')}</p>`
-    ).join('').replace(/(<p><\/p>)+/g, '');
-  }
 
   async function renderNewsList() {
     const listEl = document.getElementById('news-list');
@@ -875,118 +661,6 @@ import { createSearchModule } from './search.js';
         onAuthStateChanged(auth, user => renderAdminControls(user));
       }
   
-    function sectionPage(key) {
-      switch (key) {
-        case 'memories': return '../nineteen-years/';
-        case 'actions': return '../news-events/#view=gallery';
-        case 'silver': return '../support/';
-        case 'news': return '../news-events/#view=list';
-        default: return '../home/';
-      }
-    }
-    function sectionTitle(key) {
-      return SECTION_DISPLAY[key] || 'Home';
-    }
-  
-    /* ====== Utilities ====== */
-    function formatDate(iso) {
-      try {
-        const d = new Date(iso);
-        return d.toLocaleDateString(undefined, { day: '2-digit', month: 'short', year: 'numeric' });
-      } catch { return iso; }
-    }
-    function sanitizeTitle(text) {
-      const t = (text || '').trim().replace(/\s+/g, ' ');
-      if (t.length <= 80) return t;
-      return t.slice(0, 77) + '…';
-    }
-    function makeSnippet(text, maxLength = 140) {
-      const normalized = String(text || '').replace(/\s+/g, ' ').trim();
-      if (!normalized) return '';
-      if (normalized.length <= maxLength) return normalized;
-      const slice = normalized.slice(0, Math.max(0, maxLength - 3));
-      const boundary = slice.lastIndexOf(' ');
-      const trimmed = boundary > 40 ? slice.slice(0, boundary) : slice;
-      return trimmed.replace(/\s+$/, '') + '...';
-    }
-    function escapeHtml(str) {
-      return String(str || '')
-        .replaceAll('&', '&amp;')
-        .replaceAll('<', '&lt;')
-        .replaceAll('>', '&gt;')
-        .replaceAll('"', '&quot;')
-        .replaceAll("'", '&#39;');
-    }
-    function parseDateValue(value) {
-      if (!value) return null;
-      if (typeof value === 'number' && Number.isFinite(value)) return value;
-      if (value instanceof Date) {
-        const time = value.getTime();
-        return Number.isFinite(time) ? time : null;
-      }
-      if (typeof value === 'string') {
-        const trimmed = value.trim();
-        if (!trimmed) return null;
-        const time = Date.parse(trimmed);
-        return Number.isNaN(time) ? null : time;
-      }
-      if (typeof value === 'object') {
-        if (typeof value.toDate === 'function') {
-          const d = value.toDate();
-          const time = d?.getTime?.();
-          return Number.isFinite(time) ? time : null;
-        }
-        if (typeof value.toMillis === 'function') {
-          const time = value.toMillis();
-          return Number.isFinite(time) ? time : null;
-        }
-        if (typeof value.seconds === 'number') {
-          const time = value.seconds * 1000 + Math.floor((value.nanoseconds || 0) / 1e6);
-          return Number.isFinite(time) ? time : null;
-        }
-      }
-      return null;
-    }
-    function compareSubmissionsByEventDateAsc(a, b) {
-      return compareSubmissionsByEventDate(b, a);
-    }
-    function compareSubmissionsByEventDate(a, b) {
-      const aEvent = parseDateValue(a?.eventDate);
-      const bEvent = parseDateValue(b?.eventDate);
-      const aHasEvent = aEvent !== null;
-      const bHasEvent = bEvent !== null;
-      if (aHasEvent && bHasEvent && bEvent !== aEvent) return bEvent - aEvent;
-      if (aHasEvent !== bHasEvent) return aHasEvent ? 1 : -1;
-      const aPosted = parseDateValue(a?.postedAt);
-      const bPosted = parseDateValue(b?.postedAt);
-      if (aPosted !== null && bPosted !== null && bPosted !== aPosted) return bPosted - aPosted;
-      if (aPosted !== null && bPosted === null) return -1;
-      if (aPosted === null && bPosted !== null) return 1;
-      const aId = a?.id || '';
-      const bId = b?.id || '';
-      return aId.localeCompare(bId);
-    }
-    function getEventDateInfo(eventDate) {
-      if (eventDate === undefined || eventDate === null) return null;
-      if (typeof eventDate === 'string') {
-        const trimmed = eventDate.trim();
-        if (!trimmed) return null;
-        const parsed = parseDateValue(trimmed);
-        if (parsed !== null) {
-          const iso = new Date(parsed).toISOString();
-          return { datetime: iso, display: formatDate(iso) };
-        }
-        return { datetime: trimmed, display: trimmed };
-      }
-      const parsed = parseDateValue(eventDate);
-      if (parsed !== null) {
-        const iso = new Date(parsed).toISOString();
-        return { datetime: iso, display: formatDate(iso) };
-      }
-      const fallback = String(eventDate || '').trim();
-      if (!fallback) return null;
-      return { datetime: fallback, display: fallback };
-    }
   
     /* ====== 2022 and beyond sorting ====== */
     function sortNewsList() {
