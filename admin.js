@@ -250,12 +250,13 @@ export function initAdminPage({ $ }) {
 
   function renderSubmissionItem(it, showApprove = true) {
     const postedISO = it.postedAt?.toDate ? it.postedAt.toDate().toISOString() : '';
+    const safeMediaURL = escapeHtml(it.mediaURL || '');
     const media = it.mediaURL ? (it.mediaType?.startsWith('image/')
-      ? `<img alt="" src="${it.mediaURL}" style="max-width:640px;max-height:480px;object-fit:contain" loading="lazy" />`
+      ? `<img alt="" src="${safeMediaURL}" style="max-width:640px;max-height:480px;object-fit:contain" loading="lazy" />`
       : it.mediaType?.startsWith('video/')
-        ? `<video controls src="${it.mediaURL}" style="max-width:640px" preload="metadata"></video>`
+        ? `<video controls src="${safeMediaURL}" style="max-width:640px" preload="metadata"></video>`
         : it.mediaType?.startsWith('audio/')
-          ? `<audio controls src="${it.mediaURL}" preload="metadata"></audio>`
+          ? `<audio controls src="${safeMediaURL}" preload="metadata"></audio>`
           : '') : '';
     const safeContent = escapeHtml(it.content || '');
     const safeEmail = escapeHtml(it.email || '');

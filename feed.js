@@ -100,12 +100,13 @@ export function createFeedModule({ $, searchModule, memoriesState, memoriesModul
       
       let mediaHtml = '';
       if (item.mediaURL) {
+        const safeMediaURL = escapeHtml(item.mediaURL);
         if (item.mediaType?.startsWith('image/')) {
-          mediaHtml = `<div class="news-media"><img alt="" src="${item.mediaURL}" loading="lazy" /></div>`;
+          mediaHtml = `<div class="news-media"><img alt="" src="${safeMediaURL}" loading="lazy" /></div>`;
         } else if (item.mediaType?.startsWith('video/')) {
-          mediaHtml = `<div class="news-media"><video controls src="${item.mediaURL}" preload="metadata"></video></div>`;
+          mediaHtml = `<div class="news-media"><video controls src="${safeMediaURL}" preload="metadata"></video></div>`;
         } else if (item.mediaType?.startsWith('audio/')) {
-          mediaHtml = `<div class="news-media"><audio controls src="${item.mediaURL}" preload="metadata"></audio></div>`;
+          mediaHtml = `<div class="news-media"><audio controls src="${safeMediaURL}" preload="metadata"></audio></div>`;
         }
       }
       

@@ -74,12 +74,13 @@ export function createMemoriesModule({ searchModule, $$ }) {
       const hasMedia = !!item.mediaURL;
       let mediaHtml = '';
       if (hasMedia) {
+        const safeMediaURL = escapeHtml(item.mediaURL);
         if (item.mediaType?.startsWith('image/')) {
-          mediaHtml = `<div class="card-media"><img alt="" src="${item.mediaURL}" loading="lazy" /></div>`;
+          mediaHtml = `<div class="card-media"><img alt="" src="${safeMediaURL}" loading="lazy" /></div>`;
         } else if (item.mediaType?.startsWith('video/')) {
-          mediaHtml = `<div class="card-media"><video controls src="${item.mediaURL}" preload="metadata"></video></div>`;
+          mediaHtml = `<div class="card-media"><video controls src="${safeMediaURL}" preload="metadata"></video></div>`;
         } else if (item.mediaType?.startsWith('audio/')) {
-          mediaHtml = `<div class="card-media"><audio controls src="${item.mediaURL}" preload="metadata"></audio></div>`;
+          mediaHtml = `<div class="card-media"><audio controls src="${safeMediaURL}" preload="metadata"></audio></div>`;
         }
       }
       const displayTitle = (item.title && String(item.title).trim()) ? String(item.title).trim() : sanitizeTitle(item.content);

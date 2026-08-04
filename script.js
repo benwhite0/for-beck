@@ -226,12 +226,13 @@ import { initAdminPage } from './admin.js';
   
     let mediaHtml = '';
     if (post.mediaURL) {
+      const safeMediaURL = escapeHtml(post.mediaURL);
       if (post.mediaType?.startsWith('image/')) {
-        mediaHtml = `<div class="entry-media"><img alt="" src="${post.mediaURL}" loading="eager" /></div>`;
+        mediaHtml = `<div class="entry-media"><img alt="" src="${safeMediaURL}" loading="eager" /></div>`;
       } else if (post.mediaType?.startsWith('video/')) {
-        mediaHtml = `<div class="entry-media"><video controls src="${post.mediaURL}" preload="metadata"></video></div>`;
+        mediaHtml = `<div class="entry-media"><video controls src="${safeMediaURL}" preload="metadata"></video></div>`;
       } else if (post.mediaType?.startsWith('audio/')) {
-        mediaHtml = `<div class="entry-media"><audio controls src="${post.mediaURL}" preload="metadata"></audio></div>`;
+        mediaHtml = `<div class="entry-media"><audio controls src="${safeMediaURL}" preload="metadata"></audio></div>`;
       }
     }
     const eventDate = post.eventDate ? `<p class="muted small">Event date: ${formatDate(post.eventDate)}</p>` : '';

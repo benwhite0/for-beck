@@ -197,12 +197,13 @@ export function createSearchModule({
         
         let mediaHtml = '';
         if (item.mediaURL) {
+          const safeMediaURL = escapeHtml(item.mediaURL);
           if (item.mediaType?.startsWith('image/')) {
-            mediaHtml = `<div class="news-media"><img alt="" src="${item.mediaURL}" /></div>`;
+            mediaHtml = `<div class="news-media"><img alt="" src="${safeMediaURL}" /></div>`;
           } else if (item.mediaType?.startsWith('video/')) {
-            mediaHtml = `<div class="news-media"><video controls src="${item.mediaURL}"></video></div>`;
+            mediaHtml = `<div class="news-media"><video controls src="${safeMediaURL}"></video></div>`;
           } else if (item.mediaType?.startsWith('audio/')) {
-            mediaHtml = `<div class="news-media"><audio controls src="${item.mediaURL}"></audio></div>`;
+            mediaHtml = `<div class="news-media"><audio controls src="${safeMediaURL}"></audio></div>`;
           }
         }
         
